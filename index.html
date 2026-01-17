@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#b91c1c">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bible Pro">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3004/3004458.png">
+<link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3004/3004458.png">
+
+<title>Bible Pro Cloud</title>
+
+<style>
+/* --- CSS STYLES --- */
+:root {
+  --primary: #b91c1c; 
+  --bg: #f8fafc; --card: #ffffff;
+  --text: #334155; --text-muted: #64748b;
+  --border: #e2e8f0; 
+  --hl-yellow: #fef08a; 
+  --note-bg: #fffbeb; --note-border: #fcd34d;
+  --prayer-bg: #eff6ff; --prayer-border: #60a5fa;
+  --case-bg: #f0fdf4; --case-border: #16a34a;
+  --safe-area-top: env(safe-area-inset-top);
+  --font-main: 'Inter', sans-serif;
+  --font-size: 18px; --line-height: 1.6;
+}
+body.dark {
+  --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --text-muted: #94a3b8; --border: #334155; 
+  --note-bg: #422006; --note-border: #a16207; --prayer-bg: #172554; --prayer-border: #1d4ed8;
+  --case-bg: #064e3b; --case-border: #059669;
+  --hl-yellow: #854d0e;
+}
+body.serif-mode { --font-main: 'Crimson Text', serif; --font-size: 20px; } 
+
+body { font-family: var(--font-main); background: var(--bg); color: var(--text); margin: 0; padding-top: calc(60px + var(--safe-area-top)); padding-bottom: 90px; -webkit-tap-highlight-color: transparent; transition: background 0.3s, color 0.3s; }
+
+/* LAYOUT */
+.header { position: fixed; top: 0; left: 0; width: 100%; background: var(--primary); color: white; z-index: 1000; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); box-sizing: border-box; padding-top: var(--safe-area-top); }
+.header-btn { background: none; border: none; color: white; font-size: 1.4rem; padding: 5px; cursor: pointer; }
+
+.sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: var(--card); border-right: 1px solid var(--border); z-index: 2000; transform: translateX(-100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding-top: var(--safe-area-top); }
+.sidebar.open { transform: translateX(0); }
+.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1900; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(2px); }
+.overlay.active { opacity: 1; pointer-events: auto; }
+
+/* MENU */
+.menu-head { padding: 25px 20px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; }
+.menu-item { padding: 16px 20px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 15px; color: var(--text); font-weight: 500; font-family: 'Inter', sans-serif; }
+.menu-item:active { background: var(--bg); }
+.view-section { display: none; padding: 15px; max-width: 800px; margin: auto; animation: fadeIn 0.3s; }
+.view-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* COMPONENTS */
+.controls-card { background: var(--card); padding: 15px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid var(--border); }
+.row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+select, input, button { padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; outline: none; font-family: inherit; }
+select { flex: 1; }
+button { cursor: pointer; font-weight: 600; transition: 0.2s; }
+button:active { transform: scale(0.96); }
+button.primary-btn { background: var(--primary); color: white; border: none; width: 100%; box-shadow: 0 4px 10px rgba(185, 28, 28, 0.3); }
+
+.verse-card { background: var(--card); padding: 18px; margin-bottom: 12px; border-radius: 12px; border-left: 4px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.03); font-size: var(--font-size); line-height: var(--line-height); transition: transform 0.2s, background 0.3s; user-select: none; -webkit-user-select: none; }
+.verse-card:active { transform: scale(0.98); }
+.verse-card.hl-yellow { background: var(--hl-yellow); border-left-color: #fbbf24; color: #422006; }
+
+/* VISUAL CUE FOR CASES */
+.verse-card.curated-case { border-left: 4px solid #b45309; } 
+.verse-card.user-case { border-left: 4px solid #16a34a; }
+
+.v-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif; }
+.action-icons { display: flex; align-items: center; gap: 12px; }
+.action-icons span { cursor: pointer; font-size: 1.1rem; transition: transform 0.2s; }
+.action-icons span:hover { transform: scale(1.2); }
+.case-btn { color: #1e40af; font-weight: bold; font-size: 0.75rem !important; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
+
+.user-block { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.95rem; display: flex; gap: 8px; align-items: flex-start; flex-direction: column; overflow-x: auto; }
+.user-note { background: var(--note-bg); border-left: 3px solid var(--note-border); color: #422006; }
+.user-prayer { background: var(--prayer-bg); border-left: 3px solid var(--prayer-border); color: #172554; }
+.user-case-tag { background: var(--case-bg); border-left: 3px solid var(--case-border); color: var(--case-border); font-weight: bold; width: 100%; box-sizing: border-box; }
+
+/* SEARCH RESULT */
+.search-result { background: var(--card); padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.search-result b { color: var(--primary); }
+
+/* MODALS */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.2s; backdrop-filter: blur(3px); }
+.modal.open { opacity: 1; pointer-events: auto; }
+.modal-content { background: var(--card); padding: 24px; border-radius: 20px; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column;}
+
+/* Editor Styles UPDATED for Rich Text */
+.editor-toolbar { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; background: #f1f5f9; padding: 8px; border-radius: 8px; border: 1px solid var(--border); }
+.tool-btn { padding: 6px 10px; background: white; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.9rem; cursor: pointer; flex: 1; text-align: center; min-width: 30px; display:flex; align-items:center; justify-content:center; color: #334155; }
+.tool-btn:hover { background: #e2e8f0; color: black; }
+.color-picker { width: 35px; height: 30px; padding: 0; border: none; background: transparent; cursor: pointer; }
+
+input.title-input { width: 100%; border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 10px 0; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; background: transparent; }
+input.title-input:focus { border-bottom-color: var(--primary); }
+
+/* Rich Text Area */
+.rich-input { 
+    width: 100%; height: 200px; padding: 12px; 
+    border: 1px solid var(--border); background: var(--bg); color: var(--text); 
+    border-radius: 10px; font-family: inherit; box-sizing: border-box; line-height: 1.5; 
+    overflow-y: auto; -webkit-overflow-scrolling: touch; 
+    white-space: pre-wrap; outline: none;
+}
+.rich-input:focus { border-color: var(--primary); }
+/* Specific styles for content inside editor */
+.rich-input b { font-weight: bold; }
+.rich-input i { font-style: italic; }
+.rich-input u { text-decoration: underline; }
+.rich-input ol { padding-left: 20px; margin: 5px 0; }
+.rich-input ul { padding-left: 20px; margin: 5px 0; }
+.rich-input h3 { font-size: 1.1em; margin: 5px 0; font-weight: bold; text-decoration: underline; color: var(--primary); }
+
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1e293b; color: white; padding: 10px 24px; border-radius: 30px; opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 3000; font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.compare-row { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
+.compare-ver { font-weight: bold; color: var(--primary); font-size: 0.8rem; }
+/* Loading Animation for Related */
+.scanning-loader { width: 100%; height: 4px; background: #e2e8f0; position: relative; overflow: hidden; border-radius: 2px; margin-bottom: 10px; }
+.scanning-loader::after { content: ''; position: absolute; left: -50%; width: 50%; height: 100%; background: var(--primary); animation: scan 1s linear infinite; }
+@keyframes scan { 0% { left: -50%; } 100% { left: 100%; } }
+
+/* Case Study Content Styles */
+.case-desc { font-style: italic; color: var(--text-muted); background: var(--bg); padding: 12px; border-radius: 6px; border-left: 3px solid #1e40af; margin-bottom: 15px; font-size: 0.9rem; }
+.parallel-item { border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; }
+.parallel-item:active { background: #f1f5f9; }
+.parallel-ref { font-weight: bold; color: #1e40af; display: block; margin-bottom: 4px; font-size: 0.85rem; }
+.add-case-btn { margin-top: 15px; background: #ecfdf5; color: #047857; border: 1px solid #10b981; width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex; align-items:center; gap:15px">
+    <button class="header-btn" onclick="toggleSidebar()">☰</button>
+    <div style="font-weight:bold; font-size:1.2rem; letter-spacing:-0.5px">Bible Pro</div>
+  </div>
+  <div style="display:flex; gap:5px">
+    <button class="header-btn" onclick="nav('search')">🔍</button>
+    <button class="header-btn" onclick="toggleFont()" style="font-family:'Crimson Text'; font-weight:bold; font-size:1.3rem">Aa</button>
+    <button class="header-btn" onclick="toggleTheme()">🌗</button>
+  </div>
+</div>
+
+<div class="overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="menu-head">Bible Pro Menu</div>
+  <div class="menu-item" onclick="nav('read')">📖 &nbsp; Bible Reader</div>
+  <div class="menu-item" onclick="nav('mycases')">💼 &nbsp; My Case Studies</div>
+  <div class="menu-item" onclick="nav('search')">🔍 &nbsp; Search Bible</div>
+  <div class="menu-item" onclick="nav('daily')">🌅 &nbsp; Daily Verse</div>
+  <div class="menu-item" onclick="nav('prayer')">🙏 &nbsp; Prayer List</div>
+  <div class="menu-item" onclick="nav('cloud')">☁️ &nbsp; Cloud Sync</div>
+</div>
+
+<div id="view-read" class="view-section active">
+  <div class="controls-card">
+    <div class="row">
+      <select id="verSelect" onchange="loadBible()" style="flex:1">
+          <option value="NKJV">NKJV (New King James)</option>
+          <option value="KJV">KJV (King James)</option>
+          <option value="NIV">NIV (New Intl)</option>
+          <option value="AMP">AMP (Amplified)</option>
+          <option value="GNB">GNB (Good News)</option>
+          <option value="WEB">WEB (World English)</option>
+          <option value="ASV">ASV (American Std)</option>
+          <option value="YLT">YLT (Literal)</option>
+          <option value="BBE">BBE (Basic English)</option>
+      </select>
+    </div>
+    <div class="row">
+      <select id="bookSelect" onchange="updateChapters()"></select>
+      <select id="chapSelect" onchange="loadBible()" style="flex:0.6"></select>
+      <select id="verseSelect" onchange="scrollToVerse()" style="flex:0.5"><option>Vs</option></select>
+    </div>
+    <div class="row" style="margin-bottom:0">
+        <button onclick="prevChap()" style="flex:1">⬅ Prev</button>
+        <button onclick="nextChap()" style="flex:1">Next ➡</button>
+    </div>
+  </div>
+  <div style="text-align:center; font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">
+      💡 Tip: Click <b>"Case Study"</b> on any verse to see parallels.
+  </div>
+  <div id="bible-content"><div style="text-align:center; padding:40px; color:var(--text-muted)">Loading App...</div></div>
+</div>
+
+<div id="view-search" class="view-section">
+    <h2 style="color:var(--primary)">🔍 Search</h2>
+    <div class="controls-card">
+        <div class="row">
+            <input type="text" id="searchInput" placeholder="e.g. Money, Love, Jesus" style="flex:1">
+            <button class="primary-btn" onclick="performSearch()" style="width:auto">Go</button>
+        </div>
+        <p style="font-size:0.8rem; color:gray">Searching NKJV Bible</p>
+    </div>
+    <div id="searchResults"></div>
+</div>
+
+<div id="view-mycases" class="view-section">
+  <h2 style="color:var(--primary)">💼 My Case Studies</h2>
+  <div class="controls-card">
+      <p style="font-size:0.9rem; color:gray">Create collections of related scriptures here.</p>
+      <button class="primary-btn" onclick="openCaseBuilder()">+ Create New Case</button>
+  </div>
+  <div id="myCasesList"></div>
+</div>
+
+<div id="view-cloud" class="view-section">
+  <h2 style="color:var(--primary)">☁️ Cloud Sync</h2>
+  <div class="controls-card">
+    <div id="loginUI">
+      <p>Enter a unique <b>Secret ID</b> (e.g. "David99") to sync notes and prayers instantly.</p>
+      <input type="text" id="cloudID" placeholder="Enter Secret ID..." style="width:100%; margin-bottom:15px; font-weight:bold; box-sizing: border-box;">
+      <button class="primary-btn" onclick="connectCloud()">Connect Cloud</button>
+    </div>
+
+    <div id="syncUI" style="display:none; text-align:center">
+      <div style="font-size:4rem; margin:10px; animation: pulse 2s infinite">☁️</div>
+      <h3 id="displayID" style="color:var(--primary); margin:0"></h3>
+      <p style="font-size:0.9rem; color:#16a34a; font-weight:bold; margin-top:5px">● Live Sync Active</p>
+      <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+      <button onclick="disconnectCloud()" style="background:#ef4444; color:white; width:100%; border:none">Disconnect</button>
+    </div>
+  </div>
+  <div class="controls-card">
+    <h4>Status Log</h4>
+    <div id="statusLog" style="font-family:monospace; font-size:0.8rem; color:var(--text-muted)">System Ready...</div>
+  </div>
+</div>
+
+<div id="view-prayer" class="view-section"><h2>🙏 Prayer List</h2><div id="prayer-list"></div></div>
+<div id="view-daily" class="view-section">
+    <h2>🌅 Daily Verse</h2>
+    <div class="controls-card" style="text-align:center">
+        <button onclick="loadDaily()" style="margin-bottom:10px">🔄 New Random Verse</button>
+        <div id="daily-card"></div>
+    </div>
+</div>
+
+<div class="modal" id="editorModal">
+  <div class="modal-content" style="max-width:500px">
+    <h3 id="modalTitle" style="margin-top:0">Edit</h3>
+    <p id="modalRef" style="color:var(--primary); font-weight:bold; margin-bottom:10px"></p>
+    
+    <input type="text" id="modalTitleInput" class="title-input" placeholder="Title (Optional)...">
+    
+    <div class="editor-toolbar">
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('bold')" title="Bold"><b>B</b></button>
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('italic')" title="Italic"><i>I</i></button>
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('underline')" title="Underline"><u>U</u></button>
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('insertOrderedList')" title="Numbering">1.</button>
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('justifyLeft')" title="Align Left">L</button>
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('justifyCenter')" title="Align Center">C</button>
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('justifyRight')" title="Align Right">R</button>
+        <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('formatBlock', 'H3')" title="Sub Heading">H3</button>
+        <input type="color" class="color-picker" onchange="execCmd('foreColor', this.value)" title="Text Color">
+    </div>
+
+    <div id="modalInput" class="rich-input" contenteditable="true" spellcheck="true"></div>
+    
+    <div class="row" style="margin-top:15px">
+        <button onclick="closeModal('editorModal')" style="flex:1; background:transparent">Cancel</button>
+        <button onclick="saveFromModal()" class="primary-btn" style="flex:1">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="caseModal">
+  <div class="modal-content">
+    <h3 id="caseTitle" style="margin-top:0; color:#1e40af">Case Study</h3>
+    <div id="caseDesc" class="case-desc"></div>
+    <div id="caseLoader" class="scanning-loader" style="display:none"></div>
+    
+    <h4 style="margin:10px 0; font-size:0.9rem; text-transform:uppercase; color:gray">Parallel Scriptures (NKJV)</h4>
+    <div id="caseVerses" style="max-height:250px; overflow-y:auto"></div>
+    
+    <button id="addToMyCasesBtn" class="primary-btn add-case-btn" onclick="startCustomCaseFromModal()">+ Create Custom Case from this</button>
+
+    <div style="margin-top:15px">
+        <button onclick="closeModal('caseModal')" style="width:100%; border:none; background:transparent; color:gray">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="builderModal">
+    <div class="modal-content">
+        <h3 style="margin-top:0">🛠 Build Case Study</h3>
+        <input type="text" id="builderTitle" class="title-input" placeholder="Case Title (e.g. Healing)">
+        <textarea id="builderDesc" style="width:100%; height:60px; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:10px; font-family:inherit" placeholder="Description..."></textarea>
+        
+        <h4>Verses:</h4>
+        <div id="builderVerses" style="max-height:150px; overflow-y:auto; margin-bottom:10px; background:#f9fafb; padding:10px; border-radius:8px;"></div>
+        
+        <div class="row">
+            <input type="text" id="builderAddRef" placeholder="Add Ref (e.g. John 3:16)" style="flex:1">
+            <button onclick="addRefToBuilder()">Add</button>
+        </div>
+
+        <div class="row" style="margin-top:15px">
+            <button onclick="closeModal('builderModal')" style="flex:1; background:transparent">Cancel</button>
+            <button onclick="saveCustomCase()" class="primary-btn" style="flex:1">Save Case</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="compareModal">
+  <div class="modal-content">
+    <h3 style="margin-top:0">⚖️ Compare</h3>
+    <p id="compareRef" style="color:var(--primary); font-weight:bold;"></p>
+    <div id="compareList" style="text-align:left; font-size:0.95rem;">Loading...</div>
+    <div style="margin-top:20px">
+        <button onclick="closeModal('compareModal')" class="primary-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved Successfully</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDbdmfhw6hfeCi88ua4OjfVUE2Ckv8hYyU",
+    authDomain: "bible-pro-coud.firebaseapp.com",
+    projectId: "bible-pro-coud",
+    storageBucket: "bible-pro-coud.firebasestorage.app",
+    messagingSenderId: "3970066488",
+    appId: "1:3970066488:web:6e6b065431813d2360decd"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  /* --- CURATED CASE DATA --- */
+  const curatedCases = {
+    PROPHET_REJECTED: {
+      title: "Prophet Rejected by His Own People",
+      description: "A recurring biblical pattern where God's messenger is dishonoured due to familiarity, unbelief, and rejection.",
+      refs: [
+        ["Mark",6,3], ["Matthew",13,54], ["Matthew",13,55], ["Matthew",13,56],
+        ["Matthew",13,57], ["Matthew",13,58], ["Luke",4,16], ["Luke",4,22],
+        ["Luke",4,24], ["John",4,44], ["Jeremiah",11,21], ["Psalm",118,22]
+      ]
+    }
+  };
+
+  let state = {
+    book: 1, chapter: 1, version: 'NKJV', 
+    highlights: JSON.parse(localStorage.getItem('highlights')) || {}, 
+    verseNotes: JSON.parse(localStorage.getItem('verseNotes')) || {},
+    versePrayers: JSON.parse(localStorage.getItem('versePrayers')) || {},
+    userCases: JSON.parse(localStorage.getItem('userCases')) || {}, 
+    currentID: localStorage.getItem('cloudID'),
+    serifMode: localStorage.getItem('serifMode') === 'true'
+  };
+
+  let currentScriptureData = null; 
+  let activeEditor = { id: null, type: null };
+  let editingCaseId = null; 
+  let tempCaseRefs = []; 
+  let unsubscribe = null; 
+
+  const bibleData = [
+    {n:"Genesis",c:50},{n:"Exodus",c:40},{n:"Leviticus",c:27},{n:"Numbers",c:36},{n:"Deuteronomy",c:34},
+    {n:"Joshua",c:24},{n:"Judges",c:21},{n:"Ruth",c:4},{n:"1 Samuel",c:31},{n:"2 Samuel",c:24},
+    {n:"1 Kings",c:22},{n:"2 Kings",c:25},{n:"1 Chronicles",c:29},{n:"2 Chronicles",c:36},{n:"Ezra",c:10},
+    {n:"Nehemiah",c:13},{n:"Esther",c:10},{n:"Job",c:42},{n:"Psalms",c:150},{n:"Proverbs",c:31},
+    {n:"Ecclesiastes",c:12},{n:"Song of Solomon",c:8},{n:"Isaiah",c:66},{n:"Jeremiah",c:52},{n:"Lamentations",c:5},
+    {n:"Ezekiel",c:48},{n:"Daniel",c:12},{n:"Hosea",c:14},{n:"Joel",c:3},{n:"Amos",c:9},{n:"Obadiah",c:1},
+    {n:"Jonah",c:4},{n:"Micah",c:7},{n:"Nahum",c:3},{n:"Habakkuk",c:3},{n:"Zephaniah",c:3},{n:"Haggai",c:2},
+    {n:"Zechariah",c:14},{n:"Malachi",c:4},{n:"Matthew",c:28},{n:"Mark",c:16},{n:"Luke",c:24},{n:"John",c:21},
+    {n:"Acts",c:28},{n:"Romans",c:16},{n:"1 Corinthians",c:16},{n:"2 Corinthians",c:13},{n:"Galatians",c:6},
+    {n:"Ephesians",c:6},{n:"Philippians",c:4},{n:"Colossians",c:4},{n:"1 Thessalonians",c:5},{n:"2 Thessalonians",c:3},
+    {n:"1 Timothy",c:6},{n:"2 Timothy",c:4},{n:"Titus",c:3},{n:"Philemon",c:1},{n:"Hebrews",c:13},
+    {n:"James",c:5},{n:"1 Peter",c:5},{n:"2 Peter",c:3},{n:"1 John",c:5},{n:"2 John",c:1},{n:"3 John",c:1},
+    {n:"Jude",c:1},{n:"Revelation",c:22}
+  ];
+
+  const dom = id => document.getElementById(id);
+
+  /* ------------------- RICH TEXT EDITOR LOGIC ------------------- */
+  
+  // Use execCommand to handle formatting in contenteditable div
+  window.execCmd = (command, value = null) => {
+      document.execCommand(command, false, value);
+      dom('modalInput').focus();
+  };
+
+  /* ------------------- SMART CASE LOGIC ------------------- */
+  
+  function findActiveCase(bookName, chapter, verse) {
+    for (let key in curatedCases) {
+      if (curatedCases[key].refs.some(r => r[0] == bookName && r[1] == chapter && r[2] == verse)) {
+        return { type: 'curated', ...curatedCases[key] };
+      }
+    }
+    for (let id in state.userCases) {
+       const uc = state.userCases[id];
+       if (uc.refs.some(r => r === `${bookName} ${chapter}:${verse}`)) {
+           return { type: 'user', ...uc, id };
+       }
+    }
+    return null;
+  }
+
+  window.openSmartCase = async (bookName, chapter, verse, text) => {
+      dom('caseModal').classList.add('open');
+      dom('caseVerses').innerHTML = '';
+      dom('caseLoader').style.display = 'block';
+
+      dom('addToMyCasesBtn').onclick = () => startCustomCaseFromModal(`${bookName} ${chapter}:${verse}`);
+
+      const active = findActiveCase(bookName, parseInt(chapter), parseInt(verse));
+      
+      if (active) {
+          dom('caseLoader').style.display = 'none';
+          dom('caseTitle').innerText = active.title;
+          dom('caseDesc').innerText = active.description;
+          
+          if(active.type === 'curated') {
+             renderCaseList(active.refs.map(r => ({ book: r[0], chapter: r[1], verse: r[2], text: "Loading..." })), true);
+          } else {
+             const parsed = active.refs.map(r => {
+                 const [b, rest] = r.split(/ (\d+):/);
+                 return { refString: r, text: "Stored in My Cases" };
+             });
+             let html = '';
+             active.refs.forEach(r => {
+                 html += `<div class="parallel-item">${r}</div>`;
+             });
+             dom('caseVerses').innerHTML = html;
+          }
+          return;
+      }
+
+      dom('caseTitle').innerText = `Study: ${bookName} ${chapter}:${verse}`;
+      dom('caseDesc').innerText = "Analyzing themes dynamically...";
+      
+      const keywords = extractKeywords(text);
+      
+      try {
+          const res = await fetch(`https://bolls.life/search/NKJV/?search=${encodeURIComponent(keywords)}`);
+          if(!res.ok) throw new Error("API Fail");
+          const data = await res.json();
+          const filtered = data.filter(d => !(d.book == state.book && d.chapter == chapter && d.verse == verse)).slice(0, 15);
+          
+          if(filtered.length === 0) {
+               dom('caseDesc').innerText = "No direct parallels found in NKJV.";
+          } else {
+               dom('caseDesc').innerText = `Dynamic Study on: "${keywords}" (NKJV)`;
+               renderCaseList(filtered.map(f => ({ ...f, book: bibleData[f.book-1].n })), false);
+          }
+      } catch(e) { dom('caseDesc').innerText = "Offline."; } 
+      finally { dom('caseLoader').style.display = 'none'; }
+  };
+
+  function extractKeywords(text) {
+     const clean = text.toLowerCase().replace(/[^\w\s]/g, '');
+     return clean.split(/\s+/).filter(w => w.length > 3).slice(0, 3).join(' ');
+  }
+
+  function renderCaseList(items, isCurated) {
+     let html = '';
+     items.forEach(item => {
+         const content = item.text || "Tap to read...";
+         html += `<div class="parallel-item" onclick="jumpToCase('${item.book}','${item.chapter}','${item.verse}')">
+            <span class="parallel-ref">${item.book} ${item.chapter}:${item.verse} ${isCurated ? '★' : ''}</span>
+            ${content}
+         </div>`;
+     });
+     dom('caseVerses').innerHTML = html;
+  }
+
+  window.jumpToCase = (bName, c, v) => {
+      const bIdx = bibleData.findIndex(x => x.n === bName) + 1;
+      if(bIdx > 0) {
+          dom('caseModal').classList.remove('open');
+          window.jumpTo(bIdx, c, v);
+      }
+  };
+
+  /* ------------------- CUSTOM CASE BUILDER ------------------- */
+  
+  window.openCaseBuilder = (existingId = null) => {
+      editingCaseId = existingId;
+      dom('builderModal').classList.add('open');
+      
+      if(existingId && state.userCases[existingId]) {
+          const c = state.userCases[existingId];
+          dom('builderTitle').value = c.title;
+          dom('builderDesc').value = c.description;
+          tempCaseRefs = [...c.refs];
+      } else {
+          dom('builderTitle').value = '';
+          dom('builderDesc').value = '';
+          tempCaseRefs = [];
+      }
+      renderBuilderRefs();
+  };
+
+  window.startCustomCaseFromModal = (initialRef) => {
+      dom('caseModal').classList.remove('open');
+      editingCaseId = null;
+      dom('builderModal').classList.add('open');
+      dom('builderTitle').value = "";
+      dom('builderDesc').value = "Study started from " + initialRef;
+      tempCaseRefs = [initialRef];
+      renderBuilderRefs();
+  };
+
+  window.addRefToBuilder = () => {
+      const val = dom('builderAddRef').value.trim();
+      if(val) {
+          tempCaseRefs.push(val);
+          dom('builderAddRef').value = '';
+          renderBuilderRefs();
+      }
+  };
+
+  function renderBuilderRefs() {
+      dom('builderVerses').innerHTML = tempCaseRefs.map((r, i) => 
+          `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:4px">
+             <span>${r}</span> <span style="color:red; cursor:pointer" onclick="removeBuilderRef(${i})">✖</span>
+           </div>`
+      ).join('');
+  }
+
+  window.removeBuilderRef = (i) => {
+      tempCaseRefs.splice(i, 1);
+      renderBuilderRefs();
+  };
+
+  window.saveCustomCase = () => {
+      const title = dom('builderTitle').value.trim();
+      const desc = dom('builderDesc').value.trim();
+      if(!title || tempCaseRefs.length === 0) return alert("Title and verses required");
+
+      const id = editingCaseId || Date.now().toString();
+      state.userCases[id] = { title, description: desc, refs: tempCaseRefs, created: new Date().toISOString() };
+      
+      localStorage.setItem('userCases', JSON.stringify(state.userCases));
+      pushToCloud();
+      
+      dom('builderModal').classList.remove('open');
+      window.toast("Case Saved!");
+      if(dom('view-mycases').classList.contains('active')) renderMyCases();
+      renderBible(currentScriptureData); 
+  };
+
+  window.renderMyCases = () => {
+      const list = dom('myCasesList');
+      const keys = Object.keys(state.userCases);
+      if(keys.length === 0) {
+          list.innerHTML = "<div style='padding:20px; text-align:center; color:gray'>No custom cases yet.</div>";
+          return;
+      }
+      
+      list.innerHTML = keys.map(k => {
+          const c = state.userCases[k];
+          return `<div class="verse-card user-case">
+              <div class="v-header">${c.title} 
+                 <div>
+                   <span onclick="openCaseBuilder('${k}')">✏️</span>
+                   <span onclick="deleteCase('${k}')" style="margin-left:10px; color:red">🗑</span>
+                 </div>
+              </div>
+              <p>${c.description}</p>
+              <div style="font-size:0.85rem; color:gray">${c.refs.length} scriptures linked</div>
+          </div>`;
+      }).join('');
+  };
+
+  window.deleteCase = (id) => {
+      if(confirm("Delete this case study?")) {
+          delete state.userCases[id];
+          localStorage.setItem('userCases', JSON.stringify(state.userCases));
+          pushToCloud();
+          renderMyCases();
+          renderBible(currentScriptureData);
+      }
+  };
+
+  /* ------------------- CORE APP LOGIC ------------------- */
+
+  function initCloud() {
+      if(state.currentID) {
+          dom('loginUI').style.display = 'none';
+          dom('syncUI').style.display = 'block';
+          dom('displayID').innerText = state.currentID;
+          startListener(state.currentID);
+      }
+  }
+
+  function startListener(id) {
+      dom('statusLog').innerText = "Connecting...";
+      unsubscribe = onSnapshot(doc(db, "users", id), (docSnap) => {
+          if (docSnap.exists()) {
+              const data = docSnap.data();
+              state.highlights = data.highlights || {};
+              state.verseNotes = data.notes || {};
+              state.versePrayers = data.prayers || {};
+              state.userCases = data.cases || {}; 
+              
+              localStorage.setItem('highlights', JSON.stringify(state.highlights));
+              localStorage.setItem('verseNotes', JSON.stringify(state.verseNotes));
+              localStorage.setItem('versePrayers', JSON.stringify(state.versePrayers));
+              localStorage.setItem('userCases', JSON.stringify(state.userCases));
+
+              dom('statusLog').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
+              if(dom('view-read').classList.contains('active') && currentScriptureData) renderBible(currentScriptureData); 
+              if(dom('view-mycases').classList.contains('active')) renderMyCases();
+          }
+      }, (e) => dom('statusLog').innerText = "Sync Error");
+  }
+
+  async function pushToCloud() {
+      if(!state.currentID) return;
+      try {
+          await setDoc(doc(db, "users", state.currentID), {
+              highlights: state.highlights, notes: state.verseNotes, prayers: state.versePrayers, cases: state.userCases, lastUpdate: new Date().toISOString()
+          }, { merge: true });
+          dom('statusLog').innerText = "Sent ✔";
+      } catch(e) { console.error(e); }
+  }
+
+  window.init = function() {
+    const bSelect = dom('bookSelect');
+    bibleData.forEach((b, i) => bSelect.add(new Option(b.n, i + 1)));
+    
+    const lastPos = JSON.parse(localStorage.getItem('lastPos'));
+    if(lastPos) { 
+        bSelect.value = lastPos.b; 
+        state.version = lastPos.v || 'NKJV'; 
+        dom('verSelect').value = state.version;
+        updateChapters(true); 
+        dom('chapSelect').value = lastPos.c; 
+    } else { updateChapters(true); }
+    
+    if(state.serifMode) document.body.classList.add('serif-mode');
+
+    window.loadBible();
+    initCloud();
+    window.loadDaily();
+  };
+
+  /* ... Standard Functions ... */
+
+  window.updateChapters = (skipLoad) => {
+      const bIdx = dom('bookSelect').value - 1;
+      const count = bibleData[bIdx].c;
+      dom('chapSelect').innerHTML = "";
+      for(let i=1; i<=count; i++) dom('chapSelect').add(new Option(i, i));
+      if(!skipLoad) { state.chapter = 1; window.loadBible(); }
+  };
+
+  window.prevChap = () => { if(state.chapter>1) { dom('chapSelect').value--; window.loadBible(); }};
+  window.nextChap = () => { dom('chapSelect').value++; window.loadBible(); };
+
+  window.loadBible = async () => {
+      state.book = dom('bookSelect').value; state.chapter = dom('chapSelect').value; state.version = dom('verSelect').value;
+      localStorage.setItem('lastPos', JSON.stringify({b:state.book, c:state.chapter, v:state.version}));
+      dom('bible-content').innerHTML = '<div style="text-align:center;padding:50px">Loading...</div>';
+      
+      try {
+          const res = await fetch(`https://bolls.life/get-chapter/${state.version}/${state.book}/${state.chapter}/`);
+          if(!res.ok) throw new Error("Ver not found");
+          const data = await res.json();
+          currentScriptureData = data; 
+          
+          dom('verseSelect').innerHTML = '<option>Vs</option>';
+          data.forEach(v => dom('verseSelect').add(new Option(v.verse, v.verse)));
+
+          renderBible(data);
+      } catch(e) { 
+          dom('bible-content').innerHTML = `<div style="text-align:center;padding:20px;color:red">
+            <b>${state.version} Unavailable</b><br>Try KJV, NKJV, or WEB.</div>`; 
+      }
+  };
+
+  window.scrollToVerse = () => {
+      const v = dom('verseSelect').value;
+      const el = dom('v'+v);
+      if(el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.background = 'var(--note-bg)'; setTimeout(()=>el.style.background='', 1000); }
+  };
+
+  function parseNoteData(rawData) {
+      if (!rawData) return { title: "", body: "" };
+      try { const parsed = JSON.parse(rawData); return { title: parsed.t || "", body: parsed.b || "" }; } catch (e) { }
+      return { title: "", body: rawData };
+  }
+
+  function renderBible(data) {
+      if(!data) return;
+      const bookName = bibleData[state.book-1].n;
+      let html = '';
+      
+      data.forEach((v) => {
+          const vid = `${state.book}-${state.chapter}-${v.verse}`;
+          const hl = state.highlights[vid] ? `hl-${state.highlights[vid]}` : '';
+          const nt = state.verseNotes[vid]; 
+          const pt = state.versePrayers[vid];
+
+          // Check for Active Case
+          const active = findActiveCase(bookName, parseInt(state.chapter), v.verse);
+          let caseStyle = '';
+          let caseTag = '';
+          
+          if(active) {
+              if(active.type === 'curated') {
+                  caseStyle = 'curated-case';
+              } else {
+                  caseStyle = 'user-case';
+                  caseTag = `<div class="user-block user-case-tag" onclick="event.stopPropagation(); openCaseBuilder('${active.id}')">💼 My Case: ${active.title}</div>`;
+              }
+          }
+          
+          let noteHtml = '';
+          if (nt) {
+              const { title, body } = parseNoteData(nt);
+              const titleHtml = title ? `<span class="note-title">${title}</span>` : '';
+              // Now that we support HTML, we simply render the body directly
+              noteHtml = `<div class="user-block user-note" onclick="event.stopPropagation(); openEditor('${vid}','note')">${titleHtml}📝 ${body}</div>`;
+          }
+
+          let prayerHtml = '';
+          if (pt) {
+             const { title, body } = parseNoteData(pt);
+             prayerHtml = `<div class="user-block user-prayer" onclick="event.stopPropagation(); openEditor('${vid}','prayer')">🙏 ${body}</div>`;
+          }
+          
+          html += `<div class="verse-card ${hl} ${caseStyle}" id="v${v.verse}">
+              <div class="v-header">
+                  <span style="color:var(--primary); display:flex; align-items:center; gap:8px">
+                      ${v.verse} 
+                      <span class="case-btn" onclick="event.stopPropagation(); openSmartCase('${bookName}', '${state.chapter}', '${v.verse}', '${v.text.replace(/'/g, "")}')">
+                        💼 Study
+                      </span>
+                  </span>
+                  <div class="action-icons">
+                    <span onclick="event.stopPropagation(); openCompare('${v.verse}')">⚖️</span>
+                    <span onclick="event.stopPropagation(); openEditor('${vid}','note')">📝</span>
+                    <span onclick="event.stopPropagation(); openEditor('${vid}','prayer')">🙏</span>
+                    <span onclick="event.stopPropagation(); toggleHighlight('${vid}','yellow')">🟡</span>
+                  </div>
+              </div>
+              <div style="cursor:pointer" onclick="toggleHighlight('${vid}','yellow')">${v.text}</div>
+              ${caseTag} ${noteHtml} ${prayerHtml}
+          </div>`;
+      });
+      dom('bible-content').innerHTML = html + '<div style="height:50px"></div>';
+  }
+
+  window.openCompare = async (verseNum) => {
+      dom('compareModal').classList.add('open');
+      dom('compareRef').innerText = `${bibleData[state.book-1].n} ${state.chapter}:${verseNum}`;
+      dom('compareList').innerHTML = 'Loading versions...';
+      const versToFetch = ['KJV', 'NKJV', 'WEB', 'BBE'];
+      let html = '';
+      for(let ver of versToFetch) {
+          try {
+             const res = await fetch(`https://bolls.life/get-verse/${ver}/${state.book}/${state.chapter}/${verseNum}/`);
+             const data = await res.json();
+             html += `<div class="compare-row"><div class="compare-ver">${ver}</div>${data.text}</div>`;
+          } catch(e) { html += `<div class="compare-row"><div class="compare-ver">${ver}</div><small>Not available</small></div>`; }
+      }
+      dom('compareList').innerHTML = html;
+  };
+
+  window.performSearch = async () => {
+      const q = dom('searchInput').value.trim();
+      if(q.length < 3) return alert("Search too short");
+      dom('searchResults').innerHTML = '<div style="text-align:center;padding:20px">Searching...</div>';
+      try {
+          const res = await fetch(`https://bolls.life/search/NKJV/?search=${encodeURIComponent(q)}`);
+          const data = await res.json();
+          if(!data.length) { dom('searchResults').innerHTML = '<div style="padding:20px">No results found.</div>'; return; }
+          let html = '';
+          data.slice(0, 50).forEach(item => {
+               const bName = bibleData[item.book-1].n;
+               html += `<div class="search-result" onclick="jumpTo('${item.book}','${item.chapter}','${item.verse}')">
+                   <b>${bName} ${item.chapter}:${item.verse}</b><br>${item.text}</div>`;
+          });
+          dom('searchResults').innerHTML = html;
+      } catch(e) { dom('searchResults').innerHTML = 'Error searching.'; }
+  };
+
+  window.jumpTo = (b, c, v) => {
+      dom('bookSelect').value = b; updateChapters(true); dom('chapSelect').value = c;
+      nav('read'); window.loadBible().then(() => {
+          setTimeout(() => { 
+             const el = dom('v'+v); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); 
+             window.toast(`Jumped to Verse ${v}`);
+          }, 500);
+      });
+  };
+
+  window.openEditor = (id, type) => {
+      activeEditor = { id, type }; const [b,c,v] = id.split('-');
+      dom('modalTitle').innerText = type==='note'?'Edit Note':'Add Prayer';
+      dom('modalRef').innerText = `${bibleData[b-1].n} ${c}:${v}`;
+      const rawData = (type==='note' ? state.verseNotes[id] : state.versePrayers[id]);
+      const { title, body } = parseNoteData(rawData);
+      dom('modalTitleInput').value = title;
+      // Set InnerHTML instead of value for Rich Text
+      dom('modalInput').innerHTML = body; 
+      dom('editorModal').classList.add('open'); 
+  };
+
+  window.saveFromModal = () => {
+      const title = dom('modalTitleInput').value.trim();
+      // Get InnerHTML for Rich Text
+      const body = dom('modalInput').innerHTML; 
+      const {id,type} = activeEditor;
+      
+      // Basic check if empty (stripping tags)
+      const plainText = dom('modalInput').innerText.trim();
+      let dataToSave = (!title && !plainText && !body.includes('<img')) ? null : JSON.stringify({ t: title, b: body });
+      
+      if(type==='note') { 
+          if(dataToSave) state.verseNotes[id] = dataToSave; else delete state.verseNotes[id]; 
+      } else { 
+          if(dataToSave) state.versePrayers[id] = dataToSave; else delete state.versePrayers[id]; 
+      }
+      localStorage.setItem('verseNotes', JSON.stringify(state.verseNotes));
+      localStorage.setItem('versePrayers', JSON.stringify(state.versePrayers));
+      renderBible(currentScriptureData); pushToCloud();
+      dom('editorModal').classList.remove('open'); window.toast("Saved!");
+      if(dom('view-prayer').classList.contains('active')) renderPrayerList();
+  };
+
+  window.closeModal = (id) => dom(id).classList.remove('open');
+  window.toggleHighlight = (id, c) => { 
+      if(state.highlights[id]===c) delete state.highlights[id]; else state.highlights[id]=c; 
+      localStorage.setItem('highlights',JSON.stringify(state.highlights)); 
+      renderBible(currentScriptureData); pushToCloud();
+  };
+
+  window.nav = (id) => { 
+      dom('sidebar').classList.remove('open'); document.querySelector('.overlay').classList.remove('active');
+      document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active')); 
+      dom('view-'+id).classList.add('active'); 
+      if(id==='prayer') window.renderPrayerList();
+      if(id==='mycases') window.renderMyCases();
+  };
+
+  window.toggleSidebar = () => { dom('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('active'); };
+  window.toggleTheme = () => document.body.classList.toggle('dark');
+  window.toggleFont = () => {
+      state.serifMode = !state.serifMode;
+      if(state.serifMode) document.body.classList.add('serif-mode'); else document.body.classList.remove('serif-mode');
+      localStorage.setItem('serifMode', state.serifMode);
+  };
+
+  window.renderPrayerList = () => { 
+      const list = Object.entries(state.versePrayers).map(([id, raw])=>{ 
+          const [b,c,v]=id.split('-'); const { title, body } = parseNoteData(raw);
+          return { ref:`${bibleData[b-1].n} ${c}:${v}`, t: body, title: title, id }; 
+      }); 
+      dom('prayer-list').innerHTML = list.length ? list.map(p=> {
+          const titleHtml = p.title ? `<div style="font-weight:bold;color:var(--primary);font-size:0.9rem">${p.title}</div>` : '';
+          return `<div class="verse-card"><div class="v-header">${p.ref} <span onclick="event.stopPropagation(); openEditor('${p.id}','prayer')" style="float:right;cursor:pointer">✏️</span></div>${titleHtml}<div style="font-style:italic">${p.t}</div></div>`
+      }).join('') : '<div style="text-align:center;padding:20px;color:gray">No prayers added.</div>'; 
+  };
+
+  window.loadDaily = async () => { 
+      const bIdx = Math.floor(Math.random()*66); const chap = Math.floor(Math.random()*bibleData[bIdx].c)+1;
+      try {
+        const res = await fetch(`https://bolls.life/get-chapter/KJV/${bIdx+1}/${chap}/`);
+        const data = await res.json();
+        const v = data[Math.floor(Math.random()*data.length)];
+        dom('daily-card').innerHTML = `<h3 style="color:var(--primary);margin-top:0">${bibleData[bIdx].n} ${chap}:${v.verse}</h3><p style="font-size:1.1rem">"${v.text}"</p><button onclick="jumpTo('${bIdx+1}','${chap}','${v.verse}')" class="primary-btn">Go to Chapter</button>`;
+      } catch(e) { dom('daily-card').innerHTML = "Daily Verse Offline"; }
+  };
+
+  window.toast = (m) => { const t = dom('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); };
+  
+  // Expose functions globally
+  window.openSmartCase = window.openSmartCase;
+  window.jumpToCase = window.jumpToCase;
+  window.openCaseBuilder = window.openCaseBuilder;
+  window.startCustomCaseFromModal = window.startCustomCaseFromModal;
+  window.addRefToBuilder = window.addRefToBuilder;
+  window.removeBuilderRef = window.removeBuilderRef;
+  window.saveCustomCase = window.saveCustomCase;
+  window.renderMyCases = window.renderMyCases;
+  window.deleteCase = window.deleteCase;
+  window.execCmd = window.execCmd;
+
+  window.init();
+
+</script>
+</body>
+</html>
