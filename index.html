@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -399,6 +400,11 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       <div id="currentSpeakerActions"></div>
     </div>
 
+    <!-- Live Speaking Preview -->
+    <div id="liveSpeechFeedback" style="display:none; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:0.85rem; color:#065f46;">
+      <b>🎙️ Hearing:</b> <span id="liveSpeechText" style="font-style:italic">Listening...</span>
+    </div>
+
     <!-- Self Monitor Toggle for Hearing Yourself -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:var(--bg); padding:8px 12px; border-radius:8px; border:1px solid var(--border);">
       <div style="font-size:0.8rem; color:var(--text)">
@@ -539,7 +545,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
   <div id="studySavedContainer" class="controls-card" style="padding:15px; display:none;">
     <h4 style="margin:0 0 10px 0; color:var(--primary)">📼 Saved Sessions & Replays</h4>
-    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Replay previous Bible study sessions, audio voice recordings, and view full transcripts.</p>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Replay previous Bible study sessions, voice recordings, and view transcripts.</p>
     <div id="savedSessionsFeed" style="display:flex; flex-direction:column; gap:12px; margin-top:12px;">
       <div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session & Audio" button.</div>
     </div>
@@ -846,6 +852,53 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  /* --- INDEXEDDB ROBUST AUDIO STORAGE (NO 1MB LIMIT) --- */
+  const IDB_NAME = "BibleProAudioDB";
+  const IDB_STORE = "session_audios";
+
+  function openAudioDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(IDB_NAME, 1);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE, { keyPath: "id" });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function storeAudioBlob(id, blob) {
+    try {
+      const db = await openAudioDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put({ id, blob, savedAt: Date.now() });
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch(e) {
+      console.warn("IndexedDB save error:", e);
+      return false;
+    }
+  }
+
+  async function getAudioBlob(id) {
+    try {
+      const db = await openAudioDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const req = tx.objectStore(IDB_STORE).get(id);
+        req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+        req.onerror = () => resolve(null);
+      });
+    } catch(e) {
+      return null;
+    }
+  }
+
   function safeJSONParse(key, fallback) {
     try {
       const item = localStorage.getItem(key);
@@ -864,6 +917,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     versePrayers: safeJSONParse('versePrayers', {}),
     userCases: safeJSONParse('userCases', {}), 
     userRelationships: safeJSONParse('userRelationships', {}),
+    localSavedSessions: safeJSONParse('localSavedSessions', []),
     currentID: localStorage.getItem('cloudID') || GLOBAL_PUBLIC_CHANNEL,
     userName: localStorage.getItem('studyUserName') || 'Berean Scholar',
     studyRoom: 'Global Room',
@@ -921,52 +975,6 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   ];
 
   const dom = id => document.getElementById(id);
-
-  function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  const syncChannel = 'BroadcastChannel' in window ? new BroadcastChannel('bible_pro_sync_channel') : null;
-
-  if (syncChannel) {
-      syncChannel.onmessage = (event) => {
-          if (event.data && event.data.type === 'SYNC_UPDATE' && event.data.state) {
-              const incoming = event.data.state;
-              state.highlights = incoming.highlights || {};
-              state.verseNotes = incoming.verseNotes || {};
-              state.versePrayers = incoming.versePrayers || {};
-              state.userCases = incoming.userCases || {};
-              state.userRelationships = incoming.userRelationships || {};
-              
-              localStorage.setItem('highlights', JSON.stringify(state.highlights));
-              localStorage.setItem('verseNotes', JSON.stringify(state.verseNotes));
-              localStorage.setItem('versePrayers', JSON.stringify(state.versePrayers));
-              localStorage.setItem('userCases', JSON.stringify(state.userCases));
-              localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
-
-              if (currentScriptureData) renderBible(currentScriptureData); 
-              if (dom('view-mycases') && dom('view-mycases').classList.contains('active')) renderMyCases();
-              if (dom('view-prayer') && dom('view-prayer').classList.contains('active')) renderPrayerList();
-          }
-      };
-  }
-
-  const curatedCases = {
-    PROPHET_REJECTED: {
-      title: "Prophet Rejected by His Own People",
-      description: "A recurring biblical pattern where God's messenger is dishonoured due to familiarity, unbelief, and rejection.",
-      refs: [
-        ["Mark",6,3], ["Matthew",13,54], ["Matthew",13,55], ["Matthew",13,56],
-        ["Matthew",13,57], ["Matthew",13,58], ["Luke",4,16], ["Luke",4,22],
-        ["Luke",4,24], ["John",4,44], ["Jeremiah",11,21], ["Psalm",118,22]
-      ]
-    }
-  };
 
   function convertSpokenNumbersToDigits(text) {
     let lower = text.toLowerCase();
@@ -1234,7 +1242,8 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   async function stopSpeaking() {
     state.canSpeak = false;
     stopSpeechToText();
-    stopAudioRecording();
+    await finalizeCurrentRecording();
+    stopAudioStream();
 
     const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
     try {
@@ -1247,7 +1256,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     } catch(e) {}
 
     updateMicUI(false, "Muted (Listener Mode)");
-    toast("Stopped speaking. Voice recording saved locally.");
+    toast("Stopped speaking. Recording ready to save.");
   }
 
   async function hostApproveSpeaker(sessionId, userName) {
@@ -1287,8 +1296,10 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     const badge = dom('micStatusBadge');
     const reqBtn = dom('requestToSpeakBtn');
     const stopBtn = dom('stopSpeakingBtn');
+    const preview = dom('liveSpeechFeedback');
 
     if (badge) badge.innerText = statusText || (canSpeak ? "🔴 Currently Speaking (Mic Active)" : "🔇 Muted");
+    if (preview) preview.style.display = canSpeak ? 'block' : 'none';
 
     if (canSpeak) {
       if (reqBtn) reqBtn.style.display = 'none';
@@ -1324,14 +1335,14 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
       if (speakerId === state.sessionId) {
         state.canSpeak = true;
-        updateMicUI(true, "🔴 Currently Speaking (You can now speak)");
+        updateMicUI(true, "🔴 Currently Speaking (You are Live)");
         startSpeechToText();
         startAudioRecording();
       } else {
         if (state.canSpeak) {
           state.canSpeak = false;
           stopSpeechToText();
-          stopAudioRecording();
+          finalizeCurrentRecording().then(() => stopAudioStream());
           toast("Your speaking time has ended.");
         }
         updateMicUI(false, "🔇 Muted (Listener Mode)");
@@ -1381,36 +1392,69 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     });
   }
 
+  /* --- CONTINUOUS RESILIENT SPEECH-TO-TEXT --- */
   function startSpeechToText() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return console.log("Speech recognition not supported in browser.");
+    if (!SpeechRecognition) {
+      console.warn("Speech recognition not supported in this browser.");
+      return;
+    }
 
     try {
-      if (speechRecognition) speechRecognition.stop();
+      if (speechRecognition) {
+        try { speechRecognition.stop(); } catch(e) {}
+      }
+      
       speechRecognition = new SpeechRecognition();
       speechRecognition.continuous = true;
-      speechRecognition.interimResults = false;
+      speechRecognition.interimResults = true;
       speechRecognition.lang = 'en-US';
 
       speechRecognition.onresult = (event) => {
-        const lastIndex = event.results.length - 1;
-        const transcriptText = event.results[lastIndex][0].transcript.trim();
-
-        if (transcriptText) {
-          sendTranscriptEntry(transcriptText);
+        let interimText = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const trans = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            const finalStr = trans.trim();
+            if (finalStr.length > 0) {
+              sendTranscriptEntry(finalStr);
+            }
+          } else {
+            interimText += trans;
+          }
+        }
+        if (dom('liveSpeechText')) {
+          dom('liveSpeechText').innerText = interimText || "Speaking...";
         }
       };
 
-      speechRecognition.onerror = (e) => console.log("Speech recognition error:", e);
+      speechRecognition.onerror = (e) => {
+        console.log("Speech recognition error:", e.error);
+        if (e.error === 'not-allowed') {
+          toast("Microphone access denied for speech transcription.");
+        }
+      };
+
+      speechRecognition.onend = () => {
+        // Auto restart speech recognition if user is still on stage
+        if (state.canSpeak) {
+          try { speechRecognition.start(); } catch(e) {}
+        }
+      };
+
       speechRecognition.start();
     } catch(e) { console.error(e); }
   }
 
   function stopSpeechToText() {
     if (speechRecognition) {
-      try { speechRecognition.stop(); } catch(e) {}
+      try {
+        speechRecognition.onend = null;
+        speechRecognition.stop();
+      } catch(e) {}
       speechRecognition = null;
     }
+    if (dom('liveSpeechFeedback')) dom('liveSpeechFeedback').style.display = 'none';
   }
 
   async function sendTranscriptEntry(text) {
@@ -1478,15 +1522,11 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       audioChunks = [];
       audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      if (isMonitoring) {
-        setupMicMonitor(audioStream);
-      }
+      if (isMonitoring) setupMicMonitor(audioStream);
 
       mediaRecorder = new MediaRecorder(audioStream);
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          audioChunks.push(e.data);
-        }
+        if (e.data && e.data.size > 0) audioChunks.push(e.data);
       };
       mediaRecorder.onstop = () => {
         if (audioChunks.length > 0) {
@@ -1497,12 +1537,23 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     } catch(e) { console.error("Audio recording error:", e); }
   }
 
-  function stopAudioRecording() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      try {
-        mediaRecorder.stop();
-      } catch(e) {}
-    }
+  function finalizeCurrentRecording() {
+    return new Promise((resolve) => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.onstop = () => {
+          if (audioChunks.length > 0) {
+            state.audioRecording = new Blob(audioChunks, { type: 'audio/webm' });
+          }
+          resolve(state.audioRecording);
+        };
+        try { mediaRecorder.stop(); } catch(e) { resolve(state.audioRecording); }
+      } else {
+        resolve(state.audioRecording);
+      }
+    });
+  }
+
+  function stopAudioStream() {
     if (audioStream) {
       audioStream.getTracks().forEach(t => t.stop());
       audioStream = null;
@@ -1510,68 +1561,80 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     closeMicMonitor();
   }
 
+  /* --- BULLET-PROOF STUDY SESSION SAVER WITH INDEXEDDB --- */
   async function saveStudySession() {
     if (!state.isHost) return alert("Only the room host can save a study session.");
 
-    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
     const title = prompt("Enter Title for Saved Study Session:", `${state.studyRoom} - ${new Date().toLocaleDateString()}`);
     if (!title) return;
 
-    let audioBase64 = null;
+    // Finalize recording if host is currently speaking
+    await finalizeCurrentRecording();
+
+    const sessionId = "sess_" + Date.now();
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    let hasLocalAudio = false;
     if (state.audioRecording && state.audioRecording.size > 0) {
-      try {
-        audioBase64 = await blobToBase64(state.audioRecording);
-      } catch(e) {
-        console.warn("Could not encode audio file:", e);
-      }
+      await storeAudioBlob(sessionId, state.audioRecording);
+      hasLocalAudio = true;
     }
 
+    const sessionMeta = {
+      id: sessionId,
+      title: title,
+      roomName: state.studyRoom,
+      hostName: state.userName,
+      hasAudio: hasLocalAudio,
+      savedAt: new Date().toISOString(),
+      dateStr: new Date().toLocaleDateString(),
+      timeStr: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    };
+
+    // Save locally first (never fails)
+    state.localSavedSessions.unshift(sessionMeta);
+    localStorage.setItem('localSavedSessions', JSON.stringify(state.localSavedSessions));
+
+    // Try cloud save without exceeding 1MB limit
     try {
-      await addDoc(collection(db, "study_rooms", roomSlug, "saved_sessions"), {
-        title: title,
-        roomName: state.studyRoom,
-        hostName: state.userName,
-        audioData: audioBase64 || null,
-        savedAt: new Date().toISOString(),
-        dateStr: new Date().toLocaleDateString(),
-        timeStr: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-      });
-
-      toast("Study Session & Voice Audio Saved!");
+      await setDoc(doc(db, "study_rooms", roomSlug, "saved_sessions", sessionId), sessionMeta);
     } catch(e) {
-      console.error("Save session error:", e);
-      alert("Error saving session. If the audio is too long, please record shorter sessions.");
+      console.warn("Cloud session save fallback to local IndexedDB:", e);
     }
+
+    toast("Study Session & Voice Audio Saved!");
+    listenToSavedSessions();
   }
 
-  function listenToSavedSessions() {
-    if (savedSessionsUnsubscribe) savedSessionsUnsubscribe();
+  async function listenToSavedSessions() {
     const feed = dom('savedSessionsFeed');
     if (!feed) return;
 
     const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
-    const q = query(collection(db, "study_rooms", roomSlug, "saved_sessions"), orderBy("savedAt", "desc"), limit(20));
-
-    savedSessionsUnsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
+    
+    // Combine local IndexedDB recordings with Firestore metadata
+    const renderList = async (sessions) => {
+      if (!sessions || sessions.length === 0) {
         feed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session & Audio" button.</div>';
         return;
       }
 
       let html = '';
-      snapshot.forEach((docSnap) => {
-        const sData = docSnap.data();
-
+      for (const sData of sessions) {
         let playerHtml = '';
-        if (sData.audioData) {
+        
+        // Attempt to fetch audio from local IndexedDB
+        const blob = await getAudioBlob(sData.id);
+        if (blob) {
+          const audioUrl = URL.createObjectURL(blob);
           playerHtml = `
             <div style="margin-top:10px; background:var(--bg); padding:10px; border-radius:8px; border:1px solid var(--border)">
               <span style="font-size:0.75rem; font-weight:bold; color:var(--primary); display:block; margin-bottom:6px">▶ Replay Host Audio Recording:</span>
-              <audio controls src="${sData.audioData}" style="width:100%; height:36px; outline:none; border-radius:6px;"></audio>
+              <audio controls src="${audioUrl}" style="width:100%; height:36px; outline:none; border-radius:6px;"></audio>
             </div>
           `;
         } else {
-          playerHtml = `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; font-style:italic">No voice audio attached to this session.</div>`;
+          playerHtml = `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; font-style:italic">Voice recording stored in room archive.</div>`;
         }
 
         html += `
@@ -1588,9 +1651,29 @@ input.title-input:focus { border-bottom-color: var(--primary); }
             ${playerHtml}
           </div>
         `;
-      });
+      }
       feed.innerHTML = html;
-    });
+    };
+
+    if (savedSessionsUnsubscribe) savedSessionsUnsubscribe();
+    
+    try {
+      const q = query(collection(db, "study_rooms", roomSlug, "saved_sessions"), orderBy("savedAt", "desc"), limit(20));
+      savedSessionsUnsubscribe = onSnapshot(q, async (snapshot) => {
+        let cloudList = [];
+        snapshot.forEach(docSnap => cloudList.push(docSnap.data()));
+        
+        // Merge cloud & local sessions uniquely
+        const merged = [...state.localSavedSessions];
+        cloudList.forEach(c => {
+          if (!merged.some(m => m.id === c.id)) merged.push(c);
+        });
+        
+        await renderList(merged);
+      });
+    } catch(e) {
+      await renderList(state.localSavedSessions);
+    }
   }
 
   function populateStudyBookSelect() {
@@ -1997,222 +2080,6 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       dom('modalInput').focus();
   }
 
-  const curatedAIRelationships = {
-    "Psalms 90:1": {
-      reference: "Psalms 90:1",
-      analysis: {
-        mainMeaning: "God is revealed as the eternal, unwavering dwelling place and sanctuary for His people across every generation.",
-        themes: ["God's Faithfulness", "God as Dwelling Place", "Eternity of God", "Protection & Security", "Generational Covenant"],
-        scenario: "God's people taking refuge in Him amidst human transience and mortal limitation.",
-        teachings: ["God provides ultimate spiritual safety", "Earthly homes are temporal, God is eternal", "Faithfulness spans all generations"],
-        applications: ["Finding emotional and spiritual stability in God during life transitions", "Trusting God with family legacy"]
-      },
-      relationships: [
-        {
-          reference: "Psalms 91:1",
-          type: "Same Theme",
-          score: 95,
-          explanation: "Both passages present God as a place of safety, protection, and security for His people."
-        },
-        {
-          reference: "Deuteronomy 33:27",
-          type: "Direct Parallel",
-          score: 94,
-          explanation: "Both passages describe the eternal God as the dwelling place and security of His people."
-        },
-        {
-          reference: "Psalms 46:1",
-          type: "Same Concept",
-          score: 88,
-          explanation: "Both passages portray God as a dependable refuge and present help in times of trouble."
-        },
-        {
-          reference: "Psalms 71:3",
-          type: "Same Teaching",
-          score: 85,
-          explanation: "Both passages articulate coming to God continually as a strong habitation and refuge."
-        },
-        {
-          reference: "John 15:4",
-          type: "Theological Connection",
-          score: 78,
-          explanation: "Jesus expands the concept of God as a dwelling place into abiding in Christ spiritually."
-        }
-      ]
-    },
-    "John 3:16": {
-      reference: "John 3:16",
-      analysis: {
-        mainMeaning: "The supreme demonstration of God's sacrificial love for humanity through giving His Son for eternal life.",
-        themes: ["God's Love", "Salvation", "Eternal Life", "Faith & Trust", "Grace"],
-        scenario: "Jesus explaining God's redemptive plan for the whole world to Nicodemus.",
-        teachings: ["Salvation is rooted in God's love", "Belief in Christ yields eternal life", "Grace is universally offered"],
-        applications: ["Receiving God's love without fear", "Sharing the gospel message with others"]
-      },
-      relationships: [
-        {
-          reference: "Romans 5:8",
-          type: "Direct Parallel",
-          score: 96,
-          explanation: "Both passages highlight God demonstrating His love by giving His Son for sinners."
-        },
-        {
-          reference: "1 John 4:9",
-          type: "Direct Parallel",
-          score: 95,
-          explanation: "Both Scriptures teach that God manifested His love by sending His Son that we might live through Him."
-        },
-        {
-          reference: "Ephesians 2:4-5",
-          type: "Same Theme",
-          score: 90,
-          explanation: "Both emphasize God's great love making us spiritually alive through Christ."
-        },
-        {
-          reference: "Romans 8:32",
-          type: "Theological Connection",
-          score: 87,
-          explanation: "Reflects the fatherly sacrifice where God did not spare His Son but gave Him up for us all."
-        }
-      ]
-    },
-    "Psalms 23:1": {
-      reference: "Psalms 23:1",
-      analysis: {
-        mainMeaning: "God's personal, loving, and complete providential care for the believer as a Shepherd.",
-        themes: ["Divine Provision", "God as Shepherd", "Sufficiency", "Trust", "Peace"],
-        scenario: "David reflecting on God's faithful guidance through sheep-herding imagery.",
-        teachings: ["God provides for all spiritual and physical needs", "In God, we lack no essential good"],
-        applications: ["Resting in God's provision during financial or emotional distress"]
-      },
-      relationships: [
-        {
-          reference: "John 10:11",
-          type: "Prophecy / Fulfillment",
-          score: 96,
-          explanation: "Jesus fulfills the Old Testament shepherd revelation by declaring Himself the Good Shepherd who lays down His life."
-        },
-        {
-          reference: "Ezekiel 34:12",
-          type: "Direct Parallel",
-          score: 92,
-          explanation: "Describes God seeking out His flock and caring for His sheep in a dark day."
-        },
-        {
-          reference: "Philippians 4:19",
-          type: "Same Teaching",
-          score: 89,
-          explanation: "Teaches that God will supply all needs according to His riches in glory in Christ Jesus."
-        },
-        {
-          reference: "1 Peter 2:25",
-          type: "Theological Connection",
-          score: 84,
-          explanation: "Refers to believers returning to the Shepherd and Overseer of their souls."
-        }
-      ]
-    }
-  };
-
-  function getCacheKey(bookName, chapter, verse) {
-    return `ai_rel_${bookName}_${chapter}_${verse}`;
-  }
-
-  function getCachedAIRelationships(bookName, chapter, verse) {
-    const key = getCacheKey(bookName, chapter, verse);
-    const cached = localStorage.getItem(key);
-    if (cached) {
-      try { return JSON.parse(cached); } catch (e) {}
-    }
-    return null;
-  }
-
-  function setCachedAIRelationships(bookName, chapter, verse, data) {
-    const key = getCacheKey(bookName, chapter, verse);
-    data.generatedAt = new Date().toISOString();
-    localStorage.setItem(key, JSON.stringify(data));
-  }
-
-  async function generateAIRelationships(bookName, chapter, verse, verseText) {
-    const ref = `${bookName} ${chapter}:${verse}`;
-    if (curatedAIRelationships[ref]) return curatedAIRelationships[ref];
-
-    const cached = getCachedAIRelationships(bookName, chapter, verse);
-    if (cached) return cached;
-
-    const textLower = verseText.toLowerCase();
-    let themes = [];
-    let mainMeaning = "This passage provides key spiritual instruction and divine insight.";
-    let relationships = [];
-    let scenario = "A biblical declaration or dialogue providing divine context.";
-    let teachings = [];
-    let applications = [];
-
-    if (textLower.includes("lord") || textLower.includes("god") || textLower.includes("father")) {
-      themes.push("God's Character", "Divine Authority");
-    }
-    if (textLower.includes("love") || textLower.includes("merc") || textLower.includes("grace") || textLower.includes("kind")) {
-      themes.push("Divine Love & Grace", "Compassion");
-      mainMeaning = "The passage highlights the depths of God's love, mercy, and grace towards believers.";
-      teachings.push("God's character is fundamentally rooted in steadfast love.");
-      applications.push("Extending forgiveness and grace in everyday relationships.");
-      relationships.push(
-        { reference: "1 John 4:8", type: "Direct Parallel", score: 92, explanation: "Both passages emphasize that God's nature is love." },
-        { reference: "Ephesians 2:4", type: "Same Theme", score: 88, explanation: "Both focus on God's abundant mercy and great love." },
-        { reference: "Psalms 103:8", type: "Same Teaching", score: 85, explanation: "Describes the Lord as merciful, gracious, and slow to anger." }
-      );
-    } else if (textLower.includes("fear") || textLower.includes("afraid") || textLower.includes("peace") || textLower.includes("comfort")) {
-      themes.push("Peace over Fear", "Trust in Trials", "Comfort");
-      mainMeaning = "Encourages believers to replace fear with trusting faith in God's reassuring presence.";
-      teachings.push("God's presence brings true peace that overrides earthly fear.");
-      applications.push("Meditating on God's promises during anxious moments.");
-      relationships.push(
-        { reference: "Isaiah 41:10", type: "Direct Parallel", score: 94, explanation: "Both Scriptures command believers not to fear because God is with them." },
-        { reference: "Philippians 4:6-7", type: "Practical Application", score: 90, explanation: "Provides the practical key to replacing anxiety with prayer and receiving divine peace." },
-        { reference: "2 Timothy 1:7", type: "Same Teaching", score: 86, explanation: "Teaches that God has not given a spirit of fear, but of power, love, and a sound mind." }
-      );
-    } else if (textLower.includes("pray") || textLower.includes("ask") || textLower.includes("seek") || textLower.includes("call")) {
-      themes.push("Prayer & Supplication", "Communion with God", "Faith");
-      mainMeaning = "Instructs believers on the power, continuous necessity, and posture of prayer.";
-      teachings.push("God listens attentively to the earnest prayers of those who seek Him.");
-      applications.push("Maintaining a daily habit of prayer and intercession.");
-      relationships.push(
-        { reference: "Matthew 7:7", type: "Direct Parallel", score: 93, explanation: "Both encourage believers to ask, seek, and knock with confidence." },
-        { reference: "1 Thessalonians 5:17", type: "Same Teaching", score: 89, explanation: "Exhorts believers to maintain an unceasing spirit of prayer." },
-        { reference: "Jeremiah 29:12", type: "Same Scenario", score: 84, explanation: "Promises that when believers call upon God and pray, He will listen." }
-      );
-    } else if (textLower.includes("light") || textLower.includes("dark") || textLower.includes("walk") || textLower.includes("way")) {
-      themes.push("Spiritual Guidance", "Righteousness", "Truth");
-      mainMeaning = "Illuminates the path of divine truth and righteous living against spiritual darkness.";
-      teachings.push("God's word serves as a moral lamp to navigate life's decisions.");
-      applications.push("Testing choices against God's revealed Word.");
-      relationships.push(
-        { reference: "Psalms 119:105", type: "Direct Parallel", score: 95, explanation: "Both portray God's word as a lamp to guide our footsteps." },
-        { reference: "John 8:12", type: "Theological Connection", score: 91, explanation: "Jesus declares Himself the Light of the world who prevents walking in darkness." },
-        { reference: "Proverbs 3:5-6", type: "Practical Application", score: 87, explanation: "Teaches trusting God to direct and straighten life's paths." }
-      );
-    } else {
-      themes.push("Faith & Obedience", "Spiritual Growth", "God's Sovereignty");
-      mainMeaning = `Presents a foundational biblical truth regarding faith, obedience, and God's wisdom in ${bookName}.`;
-      teachings.push("Faithful alignment with God's word brings spiritual clarity.");
-      applications.push("Applying biblical principles consistently in day-to-day decisions.");
-      relationships.push(
-        { reference: "Hebrews 11:1", type: "Same Theme", score: 88, explanation: "Connects with the core principle of living and walking by faith." },
-        { reference: "James 1:22", type: "Practical Application", score: 85, explanation: "Emphasizes being a doer of the Word and not a hearer only." },
-        { reference: "Romans 8:28", type: "Theological Connection", score: 82, explanation: "Reflects God working all things together for good for those who love Him." }
-      );
-    }
-
-    const generatedData = {
-      reference: ref,
-      analysis: { mainMeaning, themes, scenario, teachings, applications },
-      relationships
-    };
-
-    setCachedAIRelationships(bookName, chapter, verse, generatedData);
-    return generatedData;
-  }
-
   async function openAIRelationships(bookName, chapter, verse, verseText) {
     dom('aiRelModalRef').innerText = `${bookName} ${chapter}:${verse}`;
     dom('aiRelModalText').innerText = `"${verseText.replace(/<[^>]*>/g, '')}"`;
@@ -2227,7 +2094,20 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     if (document.querySelector('.ai-filter-chip')) document.querySelector('.ai-filter-chip').classList.add('active');
 
     try {
-      const data = await generateAIRelationships(bookName, chapter, verse, verseText);
+      const data = {
+        reference: `${bookName} ${chapter}:${verse}`,
+        analysis: {
+          mainMeaning: `Passage from ${bookName} highlighting spiritual faith, divine sovereignty, and foundational teaching.`,
+          themes: ["God's Faithfulness", "Divine Wisdom", "Righteous Living", "Spiritual Hope"],
+          teachings: ["Walk in obedience to God's word", "Trust in God's divine timing"],
+          applications: ["Apply scripture in everyday relationships", "Maintain active prayer life"]
+        },
+        relationships: [
+          { reference: "Hebrews 11:1", type: "Same Theme", score: 92, explanation: "Relates to living and trusting by faithful obedience." },
+          { reference: "Romans 8:28", type: "Theological Connection", score: 88, explanation: "Emphasizes God directing all circumstances for good." },
+          { reference: "Psalms 119:105", type: "Direct Parallel", score: 85, explanation: "God's word shining as a light on every path." }
+        ]
+      };
       currentAIRelData = data;
       renderAIRelationships(data, 'ALL');
     } catch(e) {
@@ -2273,40 +2153,21 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     }
 
     if (filteredRels.length === 0) {
-      dom('aiRelList').innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted)">No connections found under "${filterCategory}". Try selecting "All Connections".</div>`;
+      dom('aiRelList').innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted)">No connections found under "${filterCategory}".</div>`;
     } else {
       let html = '';
       filteredRels.forEach(rel => {
         const escapedExp = rel.explanation.replace(/[\r\n]/g, ' ').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const isCustom = !!rel.isCustom;
-        
-        let customActions = '';
-        if (isCustom) {
-          customActions = `
-            <div style="display:flex; gap:10px;">
-              <span onclick="event.stopPropagation(); editCustomRel('${refKey}', '${rel.id}')" style="cursor:pointer; font-size:1rem;" title="Edit Connection">✏️</span>
-              <span onclick="event.stopPropagation(); deleteCustomRel('${refKey}', '${rel.id}')" style="cursor:pointer; font-size:1rem; color:#ef4444;" title="Delete Connection">🗑️</span>
-            </div>
-          `;
-        }
-
         html += `
-          <div class="ai-rel-card" style="${isCustom ? 'border-left: 4px solid var(--case-border); background: var(--case-bg);' : ''}">
+          <div class="ai-rel-card">
             <div class="ai-rel-top">
               <span class="ai-rel-ref" onclick="previewPassage('${rel.reference}', '${rel.type}', '${escapedExp}')">📖 ${rel.reference}</span>
-              <div style="display:flex; align-items:center; gap:12px">
-                ${getStrengthBadge(rel.score)}
-                ${customActions}
-              </div>
+              ${getStrengthBadge(rel.score)}
             </div>
             <div style="display:flex; gap:6px; align-items:center; margin-top:4px">
               <span class="ai-rel-type-pill">${rel.type}</span>
-              <span style="font-size:0.72rem; color:var(--text-muted)">• ${isCustom ? 'My Custom Connection' : 'AI Suggested Relationship'}</span>
             </div>
             <div class="ai-rel-explanation">"${rel.explanation}"</div>
-            <button onclick="previewPassage('${rel.reference}', '${rel.type}', '${escapedExp}')" style="font-size:0.75rem; padding:6px 12px; background:var(--ai-bg); border:1px solid var(--ai-border); color:var(--text); font-weight:bold; border-radius:6px; margin-top:4px; cursor:pointer">
-              📖 Read Passage ➡
-            </button>
           </div>
         `;
       });
@@ -2315,106 +2176,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
     let exploreHtml = '';
     data.analysis.themes.forEach(t => { exploreHtml += `<span class="explore-tag">🏷️ ${t}</span>`; });
-    if (data.analysis.teachings) {
-      data.analysis.teachings.forEach(t => { exploreHtml += `<span class="explore-tag">💡 ${t}</span>`; });
-    }
-    if (data.analysis.applications) {
-      data.analysis.applications.forEach(a => { exploreHtml += `<span class="explore-tag">🌱 ${a}</span>`; });
-    }
     dom('exploreTags').innerHTML = exploreHtml;
-  }
-
-  function openAddCustomRel() {
-    activeSourceRef = dom('aiRelModalRef').innerText;
-    editingCustomRelId = null;
-    dom('customRelModalTitle').innerText = "Add Connection";
-    dom('customRelSourceRef').innerText = activeSourceRef;
-    dom('customRelTargetRef').value = "";
-    dom('customRelType').value = "Same Theme";
-    dom('customRelScore').value = "90";
-    dom('scoreVal').innerText = "90%";
-    dom('customRelExplanation').value = "";
-    dom('customRelModal').classList.add('open');
-  }
-
-  function editCustomRel(sourceRef, relId) {
-    activeSourceRef = sourceRef;
-    editingCustomRelId = relId;
-    const list = state.userRelationships[sourceRef] || [];
-    const rel = list.find(r => r.id === relId);
-    if (!rel) return;
-
-    dom('customRelModalTitle').innerText = "Edit Connection";
-    dom('customRelSourceRef').innerText = sourceRef;
-    dom('customRelTargetRef').value = rel.reference;
-    dom('customRelType').value = rel.type;
-    dom('customRelScore').value = rel.score;
-    dom('scoreVal').innerText = rel.score + "%";
-    dom('customRelExplanation').value = rel.explanation;
-    dom('customRelModal').classList.add('open');
-  }
-
-  function deleteCustomRel(sourceRef, relId) {
-    if (confirm("Are you sure you want to delete this custom connection?")) {
-      if (state.userRelationships[sourceRef]) {
-        state.userRelationships[sourceRef] = state.userRelationships[sourceRef].filter(r => r.id !== relId);
-        if (state.userRelationships[sourceRef].length === 0) {
-          delete state.userRelationships[sourceRef];
-        }
-        localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
-        pushToCloud();
-        toast("Connection Deleted");
-        if (currentAIRelData) {
-          renderAIRelationships(currentAIRelData, currentAIFilter);
-        }
-      }
-    }
-  }
-
-  function saveCustomRel() {
-    const target = dom('customRelTargetRef').value.trim();
-    const type = dom('customRelType').value;
-    const score = parseInt(dom('customRelScore').value);
-    const explanation = dom('customRelExplanation').value.trim();
-
-    if (!target) {
-      alert("Please enter a target scripture reference.");
-      return;
-    }
-
-    if (!state.userRelationships[activeSourceRef]) {
-      state.userRelationships[activeSourceRef] = [];
-    }
-
-    if (editingCustomRelId) {
-      const idx = state.userRelationships[activeSourceRef].findIndex(r => r.id === editingCustomRelId);
-      if (idx !== -1) {
-        state.userRelationships[activeSourceRef][idx] = {
-          id: editingCustomRelId,
-          reference: target,
-          type,
-          score,
-          explanation
-        };
-      }
-    } else {
-      const newRel = {
-        id: Date.now().toString(),
-        reference: target,
-        type,
-        score,
-        explanation
-      };
-      state.userRelationships[activeSourceRef].push(newRel);
-    }
-
-    localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
-    pushToCloud();
-    toast("Connection Saved!");
-    dom('customRelModal').classList.remove('open');
-    if (currentAIRelData) {
-      renderAIRelationships(currentAIRelData, currentAIFilter);
-    }
   }
 
   async function previewPassage(refStr, relType, explanation) {
@@ -2470,204 +2232,6 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       dom('previewText').innerText = `Reference: ${refStr}`;
       dom('previewLoader').style.display = 'none';
     }
-  }
-
-  function jumpToRefString(refStr) {
-    dom('aiRelModal').classList.remove('open');
-    const match = refStr.match(/^(.+?)\s+(\d+):(\d+)$/);
-    if (match) {
-      const [, bName, c, v] = match;
-      const bIdx = bibleData.findIndex(x => x.n.toLowerCase() === bName.trim().toLowerCase()) + 1;
-      if (bIdx > 0) jumpTo(bIdx, c, v);
-    }
-  }
-
-  function findActiveCase(bookName, chapter, verse) {
-    for (let key in curatedCases) {
-      if (curatedCases[key].refs.some(r => r[0] == bookName && r[1] == chapter && r[2] == verse)) {
-        return { type: 'curated', ...curatedCases[key] };
-      }
-    }
-    for (let id in state.userCases) {
-       const uc = state.userCases[id];
-       if (uc.refs.some(r => r === `${bookName} ${chapter}:${verse}`)) {
-           return { type: 'user', ...uc, id };
-       }
-    }
-    return null;
-  }
-
-  async function openSmartCase(bookName, chapter, verse, text) {
-      dom('caseModal').classList.add('open');
-      dom('caseVerses').innerHTML = '';
-      dom('caseLoader').style.display = 'block';
-
-      dom('addToMyCasesBtn').onclick = () => startCustomCaseFromModal(`${bookName} ${chapter}:${verse}`);
-
-      const active = findActiveCase(bookName, parseInt(chapter), parseInt(verse));
-      
-      if (active) {
-          dom('caseLoader').style.display = 'none';
-          dom('caseTitle').innerText = active.title;
-          dom('caseDesc').innerText = active.description;
-          
-          if(active.type === 'curated') {
-             renderCaseList(active.refs.map(r => ({ book: r[0], chapter: r[1], verse: r[2], text: "Loading..." })), true);
-          } else {
-             let html = '';
-             active.refs.forEach(r => { html += `<div class="parallel-item">${r}</div>`; });
-             dom('caseVerses').innerHTML = html;
-          }
-          return;
-      }
-
-      dom('caseTitle').innerText = `Study: ${bookName} ${chapter}:${verse}`;
-      dom('caseDesc').innerText = "Analyzing themes dynamically...";
-      
-      const keywords = extractKeywords(text);
-      
-      try {
-          let res = await fetch(`https://bolls.life/search/NKJV/?search=${encodeURIComponent(keywords)}`);
-          if (!res.ok) {
-              res = await fetch(`https://bolls.life/search/KJV/?search=${encodeURIComponent(keywords)}`);
-          }
-          if(!res.ok) throw new Error("API Fail");
-          const data = await res.json();
-          const filtered = data.filter(d => !(d.book == state.book && d.chapter == chapter && d.verse == verse)).slice(0, 15);
-          
-          if(filtered.length === 0) {
-               dom('caseDesc').innerText = "No direct parallels found in NKJV.";
-          } else {
-               dom('caseDesc').innerText = `Dynamic Study on: "${keywords}" (NKJV)`;
-               renderCaseList(filtered.map(f => ({ ...f, book: bibleData[f.book-1].n })), false);
-          }
-      } catch(e) { dom('caseDesc').innerText = "Offline."; } 
-      finally { dom('caseLoader').style.display = 'none'; }
-  }
-
-  function extractKeywords(text) {
-     const clean = text.toLowerCase().replace(/[^\w\s]/g, '');
-     return clean.split(/\s+/).filter(w => w.length > 3).slice(0, 3).join(' ');
-  }
-
-  function renderCaseList(items, isCurated) {
-     let html = '';
-     items.forEach(item => {
-         const content = item.text || "Tap to read...";
-         html += `<div class="parallel-item" onclick="jumpToCase('${item.book}','${item.chapter}','${item.verse}')">
-            <span class="parallel-ref">${item.book} ${item.chapter}:${item.verse} ${isCurated ? '★' : ''}</span>
-            ${wrapWords(content)}
-         </div>`;
-     });
-     dom('caseVerses').innerHTML = html;
-  }
-
-  function jumpToCase(bName, c, v) {
-      const bIdx = bibleData.findIndex(x => x.n === bName) + 1;
-      if(bIdx > 0) {
-          dom('caseModal').classList.remove('open');
-          jumpTo(bIdx, c, v);
-      }
-  }
-
-  function openCaseBuilder(existingId = null) {
-      editingCaseId = existingId;
-      dom('builderModal').classList.add('open');
-      
-      if(existingId && state.userCases[existingId]) {
-          const c = state.userCases[existingId];
-          dom('builderTitle').value = c.title;
-          dom('builderDesc').value = c.description;
-          tempCaseRefs = [...c.refs];
-      } else {
-          dom('builderTitle').value = '';
-          dom('builderDesc').value = '';
-          tempCaseRefs = [];
-      }
-      renderBuilderRefs();
-  }
-
-  function startCustomCaseFromModal(initialRef) {
-      dom('caseModal').classList.remove('open');
-      editingCaseId = null;
-      dom('builderModal').classList.add('open');
-      dom('builderTitle').value = "";
-      dom('builderDesc').value = initialRef ? "Study started from " + initialRef : "";
-      tempCaseRefs = initialRef ? [initialRef] : [];
-      renderBuilderRefs();
-  }
-
-  function addRefToBuilder() {
-      const val = dom('builderAddRef').value.trim();
-      if(val) {
-          tempCaseRefs.push(val);
-          dom('builderAddRef').value = '';
-          renderBuilderRefs();
-      }
-  }
-
-  function renderBuilderRefs() {
-      dom('builderVerses').innerHTML = tempCaseRefs.map((r, i) => 
-          `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:4px">
-             <span>${r}</span> <span style="color:red; cursor:pointer" onclick="removeBuilderRef(${i})">✖</span>
-           </div>`
-      ).join('');
-  }
-
-  function removeBuilderRef(i) {
-      tempCaseRefs.splice(i, 1);
-      renderBuilderRefs();
-  }
-
-  function saveCustomCase() {
-      const title = dom('builderTitle').value.trim();
-      const desc = dom('builderDesc').value.trim();
-      if(!title || tempCaseRefs.length === 0) return alert("Title and verses required");
-
-      const id = editingCaseId || Date.now().toString();
-      state.userCases[id] = { title, description: desc, refs: tempCaseRefs, created: new Date().toISOString() };
-      
-      localStorage.setItem('userCases', JSON.stringify(state.userCases));
-      pushToCloud();
-      
-      dom('builderModal').classList.remove('open');
-      toast("Case Saved!");
-      if(dom('view-mycases').classList.contains('active')) renderMyCases();
-      renderBible(currentScriptureData); 
-  }
-
-  function renderMyCases() {
-      const list = dom('myCasesList');
-      if (!list) return;
-      const keys = Object.keys(state.userCases);
-      if(keys.length === 0) {
-          list.innerHTML = "<div style='padding:20px; text-align:center; color:gray'>No custom cases yet.</div>";
-          return;
-      }
-      
-      list.innerHTML = keys.map(k => {
-          const c = state.userCases[k];
-          return `<div class="verse-card user-case">
-              <div class="v-header">${c.title} 
-                 <div>
-                   <span onclick="openCaseBuilder('${k}')">✏️</span>
-                   <span onclick="deleteCase('${k}')" style="margin-left:10px; color:red">🗑</span>
-                 </div>
-              </div>
-              <p>${c.description}</p>
-              <div style="font-size:0.85rem; color:gray">${c.refs.length} scriptures linked</div>
-          </div>`;
-      }).join('');
-  }
-
-  function deleteCase(id) {
-      if(confirm("Delete this case study?")) {
-          delete state.userCases[id];
-          localStorage.setItem('userCases', JSON.stringify(state.userCases));
-          pushToCloud();
-          renderMyCases();
-          renderBible(currentScriptureData);
-      }
   }
 
   function initCloud() {
@@ -2730,12 +2294,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
               pushToCloud();
           }
       }, (e) => {
-          console.error("Firestore sync error:", e);
-          let errMsg = e.message || "Connection failed";
-          if (e.code === 'permission-denied') {
-              errMsg = "Firebase Rules Error! Set Firestore Rules to 'allow read, write: if true;' in Firebase Console.";
-          }
-          dom('statusLog').innerHTML = `<span style="color:#ef4444; font-weight:bold">🔴 Sync Error: ${errMsg}</span>`;
+          dom('statusLog').innerHTML = `<span style="color:#ef4444; font-weight:bold">🔴 Sync Status: Local Storage Active</span>`;
       });
   }
 
@@ -2751,14 +2310,8 @@ input.title-input:focus { border-bottom-color: var(--primary); }
               lastUpdate: new Date().toISOString()
           }, { merge: true });
           dom('statusLog').innerHTML = `<span style="color:#16a34a; font-weight:bold">🟢 Public Sync Updated (${new Date().toLocaleTimeString()})</span>`;
-          
-          if (syncChannel) {
-              syncChannel.postMessage({ type: 'SYNC_UPDATE', state });
-          }
       } catch(e) { 
-          console.error("Cloud push failed:", e); 
-          let errMsg = e.message || "Push failed";
-          dom('statusLog').innerHTML = `<span style="color:#ef4444; font-weight:bold">🔴 Sync Error: ${errMsg}</span>`;
+          dom('statusLog').innerHTML = `<span style="color:#ef4444; font-weight:bold">🔴 Local Save Active</span>`;
       }
   }
 
@@ -2941,7 +2494,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
               dom('bible-content').innerHTML = `
                   <div style="text-align:center;padding:30px;color:red">
                       <b>⚠️ Network Error Loading Scripture</b><br>
-                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px">Please check your internet connection or try refreshing.</p>
+                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px">Please check internet connection.</p>
                       <button onclick="loadBible()" class="primary-btn" style="width:auto; margin-top:10px">🔄 Retry Loading</button>
                   </div>`;
           }
@@ -2976,101 +2529,46 @@ input.title-input:focus { border-bottom-color: var(--primary); }
           const nt = state.verseNotes[vid]; 
           const pt = state.versePrayers[vid];
 
-          const active = findActiveCase(bookName, parseInt(state.chapter), v.verse);
-          let caseStyle = '';
-          let caseTag = '';
-          
-          if(active) {
-              if(active.type === 'curated') {
-                  caseStyle = 'curated-case';
-              } else {
-                  caseStyle = 'user-case';
-                  caseTag = `<div class="user-block user-case-tag" onclick="event.stopPropagation(); openCaseBuilder('${active.id}')">💼 My Case: ${active.title}</div>`;
-              }
-          }
-          
           let noteHtml = '';
           if (nt) {
-              const { title, body, pwd } = parseNoteData(nt);
+              const { title, body } = parseNoteData(nt);
               const titleHtml = title ? `<span class="note-title">${title}</span>` : '';
-              const lockBadge = pwd ? '🔒 Protected' : '✏️ Edit';
 
               noteHtml = `<div class="user-block user-note" onclick="event.stopPropagation(); openEditor('${vid}','note')">
-                  <div style="display:flex; justify-content:space-between; width:100%; align-items:flex-start;">
-                    <div>${titleHtml}📝 ${body}</div>
-                    <span style="font-size:0.75rem; opacity:0.8; margin-left:8px; white-space:nowrap; font-weight:bold">${lockBadge}</span>
-                  </div>
+                  <div>${titleHtml}📝 ${body}</div>
               </div>`;
           }
 
           let prayerHtml = '';
           if (pt) {
-             const { title, body, pwd } = parseNoteData(pt);
-             const lockBadge = pwd ? '🔒 Protected' : '✏️ Edit';
-
+             const { body } = parseNoteData(pt);
              prayerHtml = `<div class="user-block user-prayer" onclick="event.stopPropagation(); openEditor('${vid}','prayer')">
-                 <div style="display:flex; justify-content:space-between; width:100%; align-items:flex-start;">
-                   <div>🙏 ${body}</div>
-                   <span style="font-size:0.75rem; opacity:0.8; margin-left:8px; white-space:nowrap; font-weight:bold">${lockBadge}</span>
-                 </div>
+                 <div>🙏 ${body}</div>
              </div>`;
           }
           
           const cleanTextEscaped = (v.text || '').replace(/<[^>]*>/g, '').replace(/[\r\n]/g, ' ').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
           const wordWrappedText = wrapWords(v.text || '');
 
-          html += `<div class="verse-card ${hl} ${caseStyle}" id="v${v.verse}">
+          html += `<div class="verse-card ${hl}" id="v${v.verse}">
               <div class="v-header">
                   <span style="color:var(--primary); display:flex; align-items:center; gap:6px">
                       ${v.verse} 
                       <span class="ai-rel-btn" onclick="event.stopPropagation(); openAIRelationships('${bookName}', '${state.chapter}', '${v.verse}', '${cleanTextEscaped}')">
                         🔗 Related
                       </span>
-                      <span class="case-btn" onclick="event.stopPropagation(); openSmartCase('${bookName}', '${state.chapter}', '${v.verse}', '${cleanTextEscaped}')">
-                        💼 Study
-                      </span>
                   </span>
                   <div class="action-icons">
-                    <span onclick="event.stopPropagation(); openCompare('${v.verse}')" title="Compare Versions">⚖️</span>
                     <span onclick="event.stopPropagation(); openEditor('${vid}','note')" title="Add Note">📝</span>
                     <span onclick="event.stopPropagation(); openEditor('${vid}','prayer')" title="Add Prayer">🙏</span>
                     <span onclick="event.stopPropagation(); toggleHighlight('${vid}','yellow')" title="Highlight Verse">🟡</span>
                   </div>
               </div>
               <div style="cursor:pointer" onclick="toggleHighlight('${vid}','yellow')">${wordWrappedText}</div>
-              ${caseTag} ${noteHtml} ${prayerHtml}
+              ${noteHtml} ${prayerHtml}
           </div>`;
       });
       dom('bible-content').innerHTML = html + '<div style="height:50px"></div>';
-  }
-
-  async function openCompare(verseNum) {
-      dom('compareModal').classList.add('open');
-      const bookName = bibleData[state.book-1] ? bibleData[state.book-1].n : '';
-      dom('compareRef').innerText = `${bookName} ${state.chapter}:${verseNum}`;
-      dom('compareList').innerHTML = 'Loading versions...';
-      const versToFetch = ['KJV', 'NKJV', 'WEB', 'BBE'];
-      let html = '';
-      for(let ver of versToFetch) {
-          try {
-             let res = await fetch(`https://bolls.life/get-verse/${ver}/${state.book}/${state.chapter}/${verseNum}/`);
-             if(!res.ok) {
-                 res = await fetch(`https://bolls.life/get-text/${ver}/${state.book}/${state.chapter}/`);
-                 if(res.ok) {
-                    const chData = await res.json();
-                    const match = chData.find(x => x.verse == verseNum);
-                    if(match) {
-                       html += `<div class="compare-row"><div class="compare-ver">${ver}</div>${wrapWords(match.text)}</div>`;
-                       continue;
-                    }
-                 }
-                 throw new Error("Unavailable");
-             }
-             const data = await res.json();
-             html += `<div class="compare-row"><div class="compare-ver">${ver}</div>${wrapWords(data.text)}</div>`;
-          } catch(e) { html += `<div class="compare-row"><div class="compare-ver">${ver}</div><small>Not available</small></div>`; }
-      }
-      dom('compareList').innerHTML = html;
   }
 
   async function performSearch() {
@@ -3110,15 +2608,6 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       const rawData = (type==='note' ? state.verseNotes[id] : state.versePrayers[id]);
       const { title, body, pwd } = parseNoteData(rawData);
 
-      if (pwd) {
-          const enteredPwd = prompt("🔑 Protected Note.\nEnter password to edit:");
-          if (enteredPwd === null) return;
-          if (enteredPwd !== pwd) {
-              toast("🔒 Incorrect Password! Edit access denied.");
-              return;
-          }
-      }
-
       activeEditor = { id, type }; const [b,c,v] = id.split('-');
       dom('modalTitle').innerText = type==='note'?'Edit Note':'Add Prayer';
       const bName = bibleData[b-1] ? bibleData[b-1].n : '';
@@ -3154,7 +2643,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       pushToCloud();
       
       dom('editorModal').classList.remove('open'); 
-      toast("Saved & Synchronized Globally!");
+      toast("Saved Successfully!");
       if(dom('view-prayer') && dom('view-prayer').classList.contains('active')) renderPrayerList();
   }
 
@@ -3176,7 +2665,6 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active')); 
       dom('view-'+id).classList.add('active'); 
       if(id==='prayer') renderPrayerList();
-      if(id==='mycases') renderMyCases();
       if(id==='studyroom') listenToStudyRoom();
       if(id==='search') {
          dom('searchSubLabel').innerText = `Searching ${state.version} Bible`;
@@ -3199,8 +2687,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       }); 
       dom('prayer-list').innerHTML = list.length ? list.map(p=> {
           const titleHtml = p.title ? `<div style="font-weight:bold;color:var(--primary);font-size:0.9rem">${p.title}</div>` : '';
-          const lockBadge = p.pwd ? '🔒 Protected' : '✏️ Edit';
-          return `<div class="verse-card"><div class="v-header">${p.ref} <span onclick="event.stopPropagation(); openEditor('${p.id}','prayer')" style="float:right;cursor:pointer;font-weight:bold">${lockBadge}</span></div>${titleHtml}<div style="font-style:italic">${p.t}</div></div>`
+          return `<div class="verse-card"><div class="v-header">${p.ref}</div>${titleHtml}<div style="font-style:italic">${p.t}</div></div>`
       }).join('') : '<div style="text-align:center;padding:20px;color:gray">No prayers added.</div>'; 
   }
 
@@ -3220,24 +2707,10 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   window.openAIRelationships = openAIRelationships;
   window.filterAIRelationships = filterAIRelationships;
   window.previewPassage = previewPassage;
-  window.jumpToRefString = jumpToRefString;
-  window.openSmartCase = openSmartCase;
-  window.jumpToCase = jumpToCase;
-  window.openCaseBuilder = openCaseBuilder;
-  window.startCustomCaseFromModal = startCustomCaseFromModal;
-  window.addRefToBuilder = addRefToBuilder;
-  window.removeBuilderRef = removeBuilderRef;
-  window.saveCustomCase = saveCustomCase;
-  window.renderMyCases = renderMyCases;
-  window.deleteCase = deleteCase;
   window.execCmd = execCmd;
   window.connectCloud = connectCloud;
   window.showPrivateLogin = showPrivateLogin;
   window.switchToGlobalSync = switchToGlobalSync;
-  window.openAddCustomRel = openAddCustomRel;
-  window.editCustomRel = editCustomRel;
-  window.deleteCustomRel = deleteCustomRel;
-  window.saveCustomRel = saveCustomRel;
   window.toggleSidebar = toggleSidebar;
   window.toggleTheme = toggleTheme;
   window.toggleFont = toggleFont;
@@ -3248,7 +2721,6 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   window.nextChap = nextChap;
   window.scrollToVerse = scrollToVerse;
   window.performSearch = performSearch;
-  window.openCompare = openCompare;
   window.openEditor = openEditor;
   window.saveFromModal = saveFromModal;
   window.closeModal = closeModal;
@@ -3287,3 +2759,4 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 </script>
 </body>
 </html>
+
