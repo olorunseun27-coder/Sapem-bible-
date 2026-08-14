@@ -25,14 +25,15 @@
   --note-bg: #fffbeb; --note-border: #fcd34d;
   --prayer-bg: #eff6ff; --prayer-border: #60a5fa;
   --case-bg: #f0fdf4; --case-border: #16a34a;
-  --safe-area-top: env(safe-area-inset-top);
+  --ai-bg: #f0f9ff; --ai-border: #0284c7;
+  --safe-area-top: env(safe-area-inset-top, 0px);
   --font-main: 'Inter', sans-serif;
   --font-size: 18px; --line-height: 1.6;
 }
 body.dark {
   --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --text-muted: #94a3b8; --border: #334155; 
   --note-bg: #422006; --note-border: #a16207; --prayer-bg: #172554; --prayer-border: #1d4ed8;
-  --case-bg: #064e3b; --case-border: #059669;
+  --case-bg: #064e3b; --case-border: #059669; --ai-bg: #0c4a6e; --ai-border: #38bdf8;
   --hl-yellow: #854d0e;
 }
 body.serif-mode { --font-main: 'Crimson Text', serif; --font-size: 20px; } 
@@ -55,11 +56,12 @@ body { font-family: var(--font-main); background: var(--bg); color: var(--text);
 .view-section { display: none; padding: 15px; max-width: 800px; margin: auto; animation: fadeIn 0.3s; }
 .view-section.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
 
 /* COMPONENTS */
 .controls-card { background: var(--card); padding: 15px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid var(--border); }
 .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-select, input, button { padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; outline: none; font-family: inherit; }
+select, input, button, textarea { padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; outline: none; font-family: inherit; }
 select { flex: 1; }
 button { cursor: pointer; font-weight: 600; transition: 0.2s; }
 button:active { transform: scale(0.96); }
@@ -74,15 +76,154 @@ button.primary-btn { background: var(--primary); color: white; border: none; wid
 .verse-card.user-case { border-left: 4px solid #16a34a; }
 
 .v-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif; }
-.action-icons { display: flex; align-items: center; gap: 12px; }
+.action-icons { display: flex; align-items: center; gap: 10px; }
 .action-icons span { cursor: pointer; font-size: 1.1rem; transition: transform 0.2s; }
 .action-icons span:hover { transform: scale(1.2); }
-.case-btn { color: #1e40af; font-weight: bold; font-size: 0.75rem !important; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
+.case-btn { color: #1e40af; font-weight: bold; font-size: 0.75rem !important; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.ai-rel-btn { color: #0284c7; font-weight: bold; font-size: 0.75rem !important; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: 1px solid #7dd3fc; }
 
 .user-block { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.95rem; display: flex; gap: 8px; align-items: flex-start; flex-direction: column; overflow-x: auto; }
 .user-note { background: var(--note-bg); border-left: 3px solid var(--note-border); color: #422006; }
 .user-prayer { background: var(--prayer-bg); border-left: 3px solid var(--prayer-border); color: #172554; }
 .user-case-tag { background: var(--case-bg); border-left: 3px solid var(--case-border); color: var(--case-border); font-weight: bold; width: 100%; box-sizing: border-box; }
+.note-title { font-weight: bold; color: var(--primary); display: block; margin-bottom: 2px; }
+
+/* STUDY ROOM STYLES */
+.study-msg-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+.study-msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+.study-user-badge {
+  font-weight: bold;
+  color: var(--primary);
+  background: rgba(185, 28, 28, 0.1);
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+.study-msg-time {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+.study-msg-ref {
+  display: inline-block;
+  font-weight: bold;
+  font-size: 0.8rem;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: fit-content;
+  margin-top: 2px;
+}
+.study-msg-ref:hover { text-decoration: underline; }
+
+.study-scripture-box {
+  background: var(--bg);
+  border-left: 4px solid var(--primary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin: 6px 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+.study-scripture-box b {
+  color: var(--primary);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+/* Q&A STYLES */
+.qna-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.qna-question-text {
+  font-weight: bold;
+  font-size: 1rem;
+  color: var(--text);
+  margin: 6px 0;
+}
+.qna-answer-item {
+  background: var(--bg);
+  border-left: 3px solid #0284c7;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 0.88rem;
+}
+
+/* LIVE VOICE & TRANSCRIPT STYLES */
+.transcript-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-left: 4px solid #0284c7;
+}
+.transcript-speaker {
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.transcript-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+/* DICTIONARY STYLES */
+.dict-word {
+  display: inline;
+  border-bottom: 1px dotted rgba(0,0,0,0.25);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+body.dark .dict-word { border-bottom-color: rgba(255,255,255,0.3); }
+.dict-word:hover, .dict-word:active {
+  background: rgba(185, 28, 28, 0.15);
+  color: var(--primary);
+  border-bottom: 1px solid var(--primary);
+}
+.dict-pos {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
+.dict-def-item {
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--primary);
+}
 
 /* SEARCH RESULT */
 .search-result { background: var(--card); padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
@@ -91,9 +232,40 @@ button.primary-btn { background: var(--primary); color: white; border: none; wid
 /* MODALS */
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.2s; backdrop-filter: blur(3px); }
 .modal.open { opacity: 1; pointer-events: auto; }
-.modal-content { background: var(--card); padding: 24px; border-radius: 20px; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column;}
+.modal-content { background: var(--card); padding: 24px; border-radius: 20px; width: 85%; max-width: 440px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column;}
 
-/* Editor Styles UPDATED for Rich Text */
+#passagePreviewModal { z-index: 6000; }
+#dictionaryModal { z-index: 6500; }
+
+/* AI RELATIONSHIP STYLES */
+.ai-header-badge { display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0369a1; font-size: 0.75rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; margin-bottom: 8px; }
+.ai-meaning-box { background: var(--ai-bg); border-left: 4px solid var(--ai-border); padding: 12px 14px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.4; color: var(--text); }
+.ai-filter-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; }
+.ai-filter-chip { padding: 6px 12px; border-radius: 20px; background: var(--bg); border: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer; color: var(--text-muted); }
+.ai-filter-chip.active { background: #0284c7; color: white; border-color: #0284c7; }
+
+.ai-rel-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: var(--card); transition: border-color 0.2s; }
+.ai-rel-card:hover { border-color: #0284c7; }
+.ai-rel-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
+.ai-rel-ref { font-weight: bold; color: var(--primary); font-size: 0.95rem; cursor: pointer; }
+.ai-rel-ref:hover { text-decoration: underline; }
+
+.strength-badge { font-size: 0.72rem; font-weight: bold; padding: 3px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; }
+.strength-very-strong { background: #dcfce7; color: #15803d; }
+.strength-strong { background: #e0f2fe; color: #0369a1; }
+.strength-moderate { background: #fef9c3; color: #a16207; }
+.strength-possible { background: #f1f5f9; color: #475569; }
+
+.ai-rel-type-pill { background: #f1f5f9; color: #334155; font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); }
+.ai-rel-explanation { font-size: 0.88rem; color: var(--text); margin: 8px 0; line-height: 1.4; }
+.ai-rel-disclaimer { font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 8px; font-style: italic; }
+
+.explore-section { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 10px; }
+.explore-title { font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
+.explore-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.explore-tag { font-size: 0.75rem; background: var(--bg); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; }
+
+/* Editor Styles */
 .editor-toolbar { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; background: #f1f5f9; padding: 8px; border-radius: 8px; border: 1px solid var(--border); }
 .tool-btn { padding: 6px 10px; background: white; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.9rem; cursor: pointer; flex: 1; text-align: center; min-width: 30px; display:flex; align-items:center; justify-content:center; color: #334155; }
 .tool-btn:hover { background: #e2e8f0; color: black; }
@@ -102,7 +274,6 @@ button.primary-btn { background: var(--primary); color: white; border: none; wid
 input.title-input { width: 100%; border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 10px 0; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; background: transparent; }
 input.title-input:focus { border-bottom-color: var(--primary); }
 
-/* Rich Text Area */
 .rich-input { 
     width: 100%; height: 200px; padding: 12px; 
     border: 1px solid var(--border); background: var(--bg); color: var(--text); 
@@ -111,7 +282,6 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     white-space: pre-wrap; outline: none;
 }
 .rich-input:focus { border-color: var(--primary); }
-/* Specific styles for content inside editor */
 .rich-input b { font-weight: bold; }
 .rich-input i { font-style: italic; }
 .rich-input u { text-decoration: underline; }
@@ -124,12 +294,11 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
 .compare-row { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
 .compare-ver { font-weight: bold; color: var(--primary); font-size: 0.8rem; }
-/* Loading Animation for Related */
+
 .scanning-loader { width: 100%; height: 4px; background: #e2e8f0; position: relative; overflow: hidden; border-radius: 2px; margin-bottom: 10px; }
 .scanning-loader::after { content: ''; position: absolute; left: -50%; width: 50%; height: 100%; background: var(--primary); animation: scan 1s linear infinite; }
 @keyframes scan { 0% { left: -50%; } 100% { left: 100%; } }
 
-/* Case Study Content Styles */
 .case-desc { font-style: italic; color: var(--text-muted); background: var(--bg); padding: 12px; border-radius: 6px; border-left: 3px solid #1e40af; margin-bottom: 15px; font-size: 0.9rem; }
 .parallel-item { border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; }
 .parallel-item:active { background: #f1f5f9; }
@@ -145,6 +314,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     <div style="font-weight:bold; font-size:1.2rem; letter-spacing:-0.5px">Bible Pro</div>
   </div>
   <div style="display:flex; gap:5px">
+    <button class="header-btn" onclick="lookupWord('dictionary')" title="Dictionary Lookup">📚</button>
     <button class="header-btn" onclick="nav('search')">🔍</button>
     <button class="header-btn" onclick="toggleFont()" style="font-family:'Crimson Text'; font-weight:bold; font-size:1.3rem">Aa</button>
     <button class="header-btn" onclick="toggleTheme()">🌗</button>
@@ -155,6 +325,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 <div class="sidebar" id="sidebar">
   <div class="menu-head">Bible Pro Menu</div>
   <div class="menu-item" onclick="nav('read')">📖 &nbsp; Bible Reader</div>
+  <div class="menu-item" onclick="nav('studyroom')">👥 &nbsp; Live Study Room</div>
   <div class="menu-item" onclick="nav('mycases')">💼 &nbsp; My Case Studies</div>
   <div class="menu-item" onclick="nav('search')">🔍 &nbsp; Search Bible</div>
   <div class="menu-item" onclick="nav('daily')">🌅 &nbsp; Daily Verse</div>
@@ -188,9 +359,181 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     </div>
   </div>
   <div style="text-align:center; font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">
-      💡 Tip: Click <b>"Case Study"</b> on any verse to see parallels.
+      💡 Tip: Tap <b>any word</b> to view definition. Notes added here are <b>publicly synced</b> to all users.
   </div>
-  <div id="bible-content"><div style="text-align:center; padding:40px; color:var(--text-muted)">Loading App...</div></div>
+  <div id="bible-content"><div style="text-align:center; padding:40px; color:var(--text-muted)">Loading Bible Reader...</div></div>
+</div>
+
+<!-- LIVE STUDY ROOM VIEW -->
+<div id="view-studyroom" class="view-section">
+  <h2 style="color:var(--primary)">👥 Live Real-Time Study Room</h2>
+  
+  <div class="controls-card">
+    <div class="row">
+      <input type="text" id="studyUserName" placeholder="Enter Your Display Name..." style="flex:1">
+      <button onclick="saveUserName()" class="primary-btn" style="width:auto; padding:10px 15px;">Save Name</button>
+    </div>
+    <div class="row" style="margin-top:10px; margin-bottom:0">
+      <input type="text" id="studyRoomID" placeholder="Room Name (e.g. Global, Romans 8)" style="flex:1">
+      <button onclick="switchStudyRoom()" class="primary-btn" style="width:auto; padding:10px 15px; background:#0284c7;">Join Room</button>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:6px;">
+      <div style="font-size:0.8rem; color:var(--text-muted);">
+        In Room: <b id="currentRoomLabel" style="color:var(--primary)">Global Room</b> | User: <b id="currentUserLabel" style="color:#0284c7">Anonymous</b>
+      </div>
+      <button onclick="toggleHostRole()" id="hostToggleBtn" style="font-size:0.75rem; padding:4px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px;">👑 Claim Host Role</button>
+    </div>
+  </div>
+
+  <div class="controls-card" style="border-left:4px solid #16a34a; background:var(--card)">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+      <h4 style="margin:0; color:var(--text); font-size:1rem;">🎙️ Live Voice & Speaking Stage</h4>
+      <span id="micStatusBadge" style="font-size:0.75rem; font-weight:bold; padding:4px 10px; border-radius:12px; background:#f1f5f9; color:#475569;">🔇 Muted (Listener Mode)</span>
+    </div>
+
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div>
+        <span style="font-size:0.72rem; font-weight:bold; text-transform:uppercase; color:var(--text-muted)">CURRENT SPEAKER</span>
+        <div id="currentSpeakerName" style="font-weight:bold; font-size:1rem; color:var(--primary); margin-top:2px;">🎙️ Room Host (Moderator)</div>
+      </div>
+      <div id="currentSpeakerActions"></div>
+    </div>
+
+    <div id="participantVoiceControls">
+      <button id="requestToSpeakBtn" onclick="requestToSpeak()" class="primary-btn" style="background:#0284c7; display:flex; align-items:center; justify-content:center; gap:8px;">
+        ✋ Request to Speak
+      </button>
+      <button id="stopSpeakingBtn" onclick="stopSpeaking()" class="primary-btn" style="background:#ef4444; display:none;">
+        🛑 Finish / Stop Speaking
+      </button>
+    </div>
+
+    <div id="hostQueuePanel" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="margin:0; font-size:0.9rem; color:#b45309;">👑 Host Moderation & Speaking Queue</h4>
+        <button onclick="saveStudySession()" style="font-size:0.75rem; padding:4px 10px; background:#16a34a; color:white; border:none; border-radius:6px;">💾 Save Session</button>
+      </div>
+
+      <div style="font-size:0.8rem; font-weight:bold; color:var(--text-muted); margin-bottom:6px;">NEXT IN QUEUE:</div>
+      <div id="speakingQueueList" style="display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;">
+        <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No active speaking requests.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls-card" style="border-left: 4px solid #0284c7; background: var(--ai-bg);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <span style="font-size:0.72rem; font-weight:bold; text-transform:uppercase; color:#0369a1; letter-spacing:0.5px">📌 Current Discussion Topic</span>
+        <h3 id="roomTopicTitle" style="margin:4px 0 6px 0; color:var(--text); font-size:1.1rem;">General Fellowship & Bible Discussion</h3>
+      </div>
+      <button onclick="toggleEditTopicForm()" style="font-size:0.75rem; padding:6px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; white-space:nowrap; cursor:pointer;">✏️ Set Topic</button>
+    </div>
+
+    <div style="margin-top:8px;">
+      <span style="font-size:0.75rem; font-weight:bold; color:var(--text-muted);">📖 Focus Scriptures to Discuss:</span>
+      <div id="roomFocusScriptures" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+        <span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No focus scriptures set yet.</span>
+      </div>
+    </div>
+
+    <div id="editTopicForm" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);">
+      <h4 style="margin:0 0 10px 0; font-size:0.9rem; color:var(--text)">Edit Discussion Topic & Focus Scriptures</h4>
+      <div class="row">
+        <input type="text" id="inputTopicTitle" placeholder="Discussion Topic (e.g. Faith, Grace & Salvation)..." style="flex:1">
+      </div>
+      <div class="row">
+        <input type="text" id="inputFocusScriptures" placeholder="Focus Scriptures (e.g. Romans 8:28, John 3:16)..." style="flex:1">
+      </div>
+      <div class="row" style="margin-bottom:0; margin-top:10px;">
+        <button onclick="toggleEditTopicForm()" style="flex:1; background:transparent">Cancel</button>
+        <button class="primary-btn" onclick="saveRoomTopic()" style="flex:1; background:#0284c7;">Update Room Topic 📌</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls-card" style="border-left: 4px solid #0284c7;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <h4 style="margin:0; font-size:0.95rem; color:#0369a1; display:flex; align-items:center; gap:6px;">
+        📝 LIVE REAL-TIME TRANSCRIPT
+      </h4>
+      <button onclick="toggleTranscriptPanel()" id="transcriptToggleBtn" style="font-size:0.75rem; padding:4px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px;">▼ Collapse</button>
+    </div>
+
+    <div id="liveTranscriptBody">
+      <div id="transcriptFeed" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+        <div style="text-align:center; padding:15px; color:var(--text-muted); font-size:0.85rem; font-style:italic;">
+          Live speech-to-text transcript will appear here automatically when members speak...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls-card">
+    <h4 style="margin:0 0 10px 0;">💬 Share Contribution or View</h4>
+    
+    <div style="background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:10px; margin-bottom:10px;">
+      <label style="font-size:0.75rem; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:6px;">📖 Attach Full Scripture from Complete Bible:</label>
+      <div class="row">
+        <select id="studyBookSelect" onchange="updateStudyRoomChapters()" style="flex:1.2"></select>
+        <select id="studyChapSelect" style="flex:0.8"></select>
+        <input type="text" id="studyVerseNum" placeholder="Verse (e.g. 16 or 16-18)" style="flex:0.8; font-size:0.85rem">
+      </div>
+      <div class="row" style="margin-bottom:0; margin-top:6px;">
+        <button onclick="attachFullScriptureToRoom()" class="primary-btn" style="background:#0284c7; padding:8px 12px; font-size:0.82rem;">📥 Attach Full Scripture Text</button>
+      </div>
+    </div>
+
+    <div id="attachedScriptureBox" style="display:none; background:var(--card); border:1px solid #7dd3fc; border-left:4px solid #0284c7; padding:10px; border-radius:8px; margin-bottom:10px;">
+      <div id="attachedScripturePreview"></div>
+    </div>
+
+    <textarea id="studyInputText" placeholder="Share your insight, interpretation, or view on scripture with everyone live..." style="width:100%; height:80px; border:1px solid var(--border); border-radius:10px; padding:10px; box-sizing:border-box; font-family:inherit;"></textarea>
+    <button class="primary-btn" onclick="sendStudyContribution()" style="margin-top:10px;">Post Contribution 🚀</button>
+  </div>
+
+  <div style="display:flex; gap:6px; margin-bottom:15px; overflow-x:auto;">
+    <button id="btnFeedTab" onclick="switchStudySubTab('feed')" class="primary-btn" style="flex:1; background:#0284c7; font-size:0.8rem; padding:8px 10px;">💬 Discussion Feed</button>
+    <button id="btnQnaTab" onclick="switchStudySubTab('qna')" class="primary-btn" style="flex:1; background:var(--card); color:var(--text); border:1px solid var(--border); font-size:0.8rem; padding:8px 10px; box-shadow:none;">❓ Q&A Forum</button>
+    <button id="btnSavedTab" onclick="switchStudySubTab('saved')" class="primary-btn" style="flex:1; background:var(--card); color:var(--text); border:1px solid var(--border); font-size:0.8rem; padding:8px 10px; box-shadow:none;">📼 Saved Sessions</button>
+  </div>
+
+  <div id="studyFeedContainer" class="controls-card" style="padding:15px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+      <h4 style="margin:0;">Discussion Feed</h4>
+      <span id="presenceCountBadge" style="font-size:0.78rem; color:#15803d; font-weight:bold; background:#dcfce7; padding:4px 10px; border-radius:12px; border:1px solid #bbf7d0;">🟢 1 Member Active</span>
+    </div>
+    <div id="activeUsersList" style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; font-style:italic;">In room: Loading active members...</div>
+
+    <div id="studyFeed" style="max-height:450px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+      <div style="text-align:center; padding:20px; color:var(--text-muted)">Loading real-time study discussions...</div>
+    </div>
+  </div>
+
+  <div id="studyQnaContainer" class="controls-card" style="padding:15px; display:none;">
+    <h4 style="margin:0 0 10px 0; color:var(--primary)">❓ Ask a Bible or Study Question</h4>
+    
+    <div class="row">
+      <input type="text" id="qnaVerseRef" placeholder="Attach Verse (e.g. Hebrews 11:1)..." style="flex:1">
+    </div>
+    <textarea id="qnaQuestionInput" placeholder="Write your question for the room to answer..." style="width:100%; height:75px; border:1px solid var(--border); border-radius:10px; padding:10px; box-sizing:border-box; font-family:inherit; margin-top:6px;"></textarea>
+    <button class="primary-btn" onclick="askStudyQuestion()" style="margin-top:10px; background:#16a34a;">Post Question ❓</button>
+
+    <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+
+    <h4 style="margin:0 0 12px 0;">Room Questions & Answers</h4>
+    <div id="qnaFeed" style="max-height:450px; overflow-y:auto; display:flex; flex-direction:column; gap:12px;">
+      <div style="text-align:center; padding:20px; color:var(--text-muted)">Loading Q&A discussions...</div>
+    </div>
+  </div>
+
+  <div id="studySavedContainer" class="controls-card" style="padding:15px; display:none;">
+    <h4 style="margin:0 0 10px 0; color:var(--primary)">📼 Saved Sessions & Replays</h4>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Replay previous Bible study sessions, audio recordings, and view full transcripts with mentioned scriptures.</p>
+    <div id="savedSessionsFeed" style="display:flex; flex-direction:column; gap:12px; margin-top:12px;">
+      <div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session" button.</div>
+    </div>
+  </div>
 </div>
 
 <div id="view-search" class="view-section">
@@ -200,7 +543,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
             <input type="text" id="searchInput" placeholder="e.g. Money, Love, Jesus" style="flex:1">
             <button class="primary-btn" onclick="performSearch()" style="width:auto">Go</button>
         </div>
-        <p style="font-size:0.8rem; color:gray">Searching NKJV Bible</p>
+        <p id="searchSubLabel" style="font-size:0.8rem; color:gray">Searching NKJV Bible</p>
     </div>
     <div id="searchResults"></div>
 </div>
@@ -217,23 +560,27 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 <div id="view-cloud" class="view-section">
   <h2 style="color:var(--primary)">☁️ Cloud Sync</h2>
   <div class="controls-card">
-    <div id="loginUI">
-      <p>Enter a unique <b>Secret ID</b> (e.g. "David99") to sync notes and prayers instantly.</p>
-      <input type="text" id="cloudID" placeholder="Enter Secret ID..." style="width:100%; margin-bottom:15px; font-weight:bold; box-sizing: border-box;">
-      <button class="primary-btn" onclick="connectCloud()">Connect Cloud</button>
+    <div id="syncUI" style="text-align:center">
+      <div style="font-size:4rem; margin:10px; animation: pulse 2s infinite">🌐</div>
+      <h3 id="displayID" style="color:var(--primary); margin:0">Global Public Sync</h3>
+      <p style="font-size:0.9rem; color:#16a34a; font-weight:bold; margin-top:5px">● Live Public Sync Active</p>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px">All notes added by anyone are automatically visible to all users in real time.</p>
+      <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+      <button onclick="showPrivateLogin()" style="background:var(--bg); border:1px solid var(--border); color:var(--text); width:100%">Switch to Private Channel</button>
     </div>
 
-    <div id="syncUI" style="display:none; text-align:center">
-      <div style="font-size:4rem; margin:10px; animation: pulse 2s infinite">☁️</div>
-      <h3 id="displayID" style="color:var(--primary); margin:0"></h3>
-      <p style="font-size:0.9rem; color:#16a34a; font-weight:bold; margin-top:5px">● Live Sync Active</p>
-      <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
-      <button onclick="disconnectCloud()" style="background:#ef4444; color:white; width:100%; border:none">Disconnect</button>
+    <div id="loginUI" style="display:none">
+      <p>Enter a unique <b>Secret ID</b> (e.g. "David99") for private group sync, or leave empty for Global Public Sync.</p>
+      <input type="text" id="cloudID" placeholder="Enter Channel ID..." style="width:100%; margin-bottom:15px; font-weight:bold; box-sizing: border-box;">
+      <div class="row">
+        <button class="primary-btn" onclick="connectCloud()" style="flex:1">Connect</button>
+        <button onclick="switchToGlobalSync()" style="flex:1; background:transparent">Use Global</button>
+      </div>
     </div>
   </div>
   <div class="controls-card">
     <h4>Status Log</h4>
-    <div id="statusLog" style="font-family:monospace; font-size:0.8rem; color:var(--text-muted)">System Ready...</div>
+    <div id="statusLog" style="font-family:monospace; font-size:0.85rem; color:var(--text); padding:10px; background:var(--bg); border-radius:8px; border:1px solid var(--border)">Connecting to Public Sync...</div>
   </div>
 </div>
 
@@ -246,12 +593,15 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     </div>
 </div>
 
+<!-- EDITOR MODAL -->
 <div class="modal" id="editorModal">
   <div class="modal-content" style="max-width:500px">
     <h3 id="modalTitle" style="margin-top:0">Edit</h3>
-    <p id="modalRef" style="color:var(--primary); font-weight:bold; margin-bottom:10px"></p>
+    <p id="modalRef" style="color:var(--primary); font-weight:bold; margin-bottom:5px"></p>
+    <p style="font-size:0.75rem; color:#16a34a; margin-top:0; margin-bottom:10px; font-weight:bold">🌐 Public Note: Everyone will see this note in real-time.</p>
     
     <input type="text" id="modalTitleInput" class="title-input" placeholder="Title (Optional)...">
+    <input type="password" id="modalPasswordInput" class="title-input" placeholder="🔑 Edit Password (Optional - Leave blank for no password)..." style="font-weight:normal; font-size:0.85rem">
     
     <div class="editor-toolbar">
         <button class="tool-btn" onmousedown="event.preventDefault(); execCmd('bold')" title="Bold"><b>B</b></button>
@@ -269,11 +619,12 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     
     <div class="row" style="margin-top:15px">
         <button onclick="closeModal('editorModal')" style="flex:1; background:transparent">Cancel</button>
-        <button onclick="saveFromModal()" class="primary-btn" style="flex:1">Save</button>
+        <button onclick="saveFromModal()" class="primary-btn" style="flex:1">Save & Share</button>
     </div>
   </div>
 </div>
 
+<!-- CASE STUDY MODAL -->
 <div class="modal" id="caseModal">
   <div class="modal-content">
     <h3 id="caseTitle" style="margin-top:0; color:#1e40af">Case Study</h3>
@@ -291,6 +642,149 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   </div>
 </div>
 
+<!-- AI-POWERED BIBLE RELATIONSHIPS MODAL -->
+<div class="modal" id="aiRelModal">
+  <div class="modal-content" style="max-width:520px">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+      <div>
+        <span class="ai-header-badge">✨ AI Suggested Relationships</span>
+        <h3 id="aiRelModalRef" style="margin:2px 0 6px 0; color:var(--primary)">Psalm 90:1</h3>
+      </div>
+      <button onclick="closeModal('aiRelModal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted)">&times;</button>
+    </div>
+    
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <p id="aiRelModalText" style="font-style:italic; font-size:0.9rem; color:var(--text-muted); margin:0; line-height:1.4"></p>
+      <button class="primary-btn" onclick="openAddCustomRel()" style="margin-bottom:15px; background:var(--case-bg); color:var(--case-border); border:1px solid var(--case-border); box-shadow:none;">➕ Add Custom Connection</button>
+    </div>
+
+    <div id="aiMeaningBox" class="ai-meaning-box">
+      <strong>Meaning Analysis:</strong> <span id="aiMeaningText">Analyzing meaning...</span>
+    </div>
+
+    <div class="ai-filter-bar" id="aiFilterBar">
+      <button class="ai-filter-chip active" onclick="filterAIRelationships('ALL')">All Connections</button>
+      <button class="ai-filter-chip" onclick="filterAIRelationships('Same Theme')">Same Theme</button>
+      <button class="ai-filter-chip" onclick="filterAIRelationships('Direct Parallel')">Direct Parallel</button>
+      <button class="ai-filter-chip" onclick="filterAIRelationships('Same Teaching')">Same Teaching</button>
+      <button class="ai-filter-chip" onclick="filterAIRelationships('Theological Connection')">Theological</button>
+      <button class="ai-filter-chip" onclick="filterAIRelationships('Practical Application')">Application</button>
+    </div>
+
+    <div id="aiRelLoader" class="scanning-loader" style="display:none"></div>
+
+    <div id="aiRelList" style="max-height:300px; overflow-y:auto"></div>
+
+    <div class="explore-section">
+      <div class="explore-title">🔍 Explore Connections</div>
+      <div id="exploreTags" class="explore-grid"></div>
+    </div>
+
+    <div class="ai-rel-disclaimer">
+      AI Suggested Relationships are generated for Bible study and thematic connection.
+    </div>
+
+    <div style="margin-top:15px">
+        <button onclick="closeModal('aiRelModal')" class="primary-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM RELATIONSHIP MODAL -->
+<div class="modal" id="customRelModal" style="z-index: 5500;">
+  <div class="modal-content" style="max-width:440px">
+    <h3 id="customRelModalTitle" style="margin-top:0; color:var(--primary)">Add Connection</h3>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px">Connect a passage to <span id="customRelSourceRef" style="font-weight:bold; color:var(--text)"></span></p>
+    
+    <div style="display:flex; flex-direction:column; gap:12px">
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px">Target Reference (e.g. Romans 8:28)</label>
+        <input type="text" id="customRelTargetRef" placeholder="e.g. John 3:16" style="width:100%; box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px">Connection Type</label>
+        <select id="customRelType" style="width:100%">
+          <option value="Same Theme">Same Theme</option>
+          <option value="Direct Parallel">Direct Parallel</option>
+          <option value="Same Teaching">Same Teaching</option>
+          <option value="Theological Connection">Theological Connection</option>
+          <option value="Practical Application">Practical Application</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px">Connection Strength (0 - 100%)</label>
+        <div style="display:flex; align-items:center; gap:10px">
+          <input type="range" id="customRelScore" min="10" max="100" value="90" style="flex:1" oninput="document.getElementById('scoreVal').innerText = this.value + '%'">
+          <span id="scoreVal" style="font-weight:bold; font-size:0.9rem; width:45px">90%</span>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px">Explanation / Connection Reason</label>
+        <textarea id="customRelExplanation" placeholder="Describe how these verses connect..." style="width:100%; height:80px; border:1px solid var(--border); border-radius:8px; padding:8px; font-family:inherit; box-sizing:border-box"></textarea>
+      </div>
+    </div>
+    
+    <div class="row" style="margin-top:20px">
+        <button onclick="closeModal('customRelModal')" style="flex:1; background:transparent">Cancel</button>
+        <button onclick="saveCustomRel()" class="primary-btn" style="flex:1">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- POP-UP SCRIPTURE PREVIEW MODAL -->
+<div class="modal" id="passagePreviewModal">
+  <div class="modal-content" style="max-width:480px">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+      <div>
+        <span class="ai-header-badge" id="previewBadge">📖 Related Scripture Preview</span>
+        <h3 id="previewRef" style="margin:2px 0 0 0; color:var(--primary)">Psalm 91:1</h3>
+      </div>
+      <button onclick="closeModal('passagePreviewModal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted)">&times;</button>
+    </div>
+
+    <div id="previewVerTag" style="font-size:0.75rem; font-weight:bold; color:var(--text-muted); margin-top:4px; text-transform:uppercase"></div>
+    
+    <div id="previewLoader" class="scanning-loader" style="display:none; margin-top:12px"></div>
+
+    <div id="previewText" style="font-size:1.05rem; line-height:1.6; margin:14px 0; padding:14px; background:var(--bg); border-left:4px solid var(--primary); border-radius:8px; color:var(--text); min-height:60px">
+      Loading scripture...
+    </div>
+
+    <div id="previewExplanation" class="ai-meaning-box" style="margin-bottom:15px">
+      <strong>Why Related:</strong> <span id="previewExpText">Loading explanation...</span>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button onclick="closeModal('passagePreviewModal')" style="flex:1; background:transparent">Close Preview</button>
+      <button id="previewJumpBtn" class="primary-btn" style="flex:1">Jump to Chapter ➡</button>
+    </div>
+  </div>
+</div>
+
+<!-- BIBLE DICTIONARY MODAL -->
+<div class="modal" id="dictionaryModal">
+  <div class="modal-content" style="max-width:460px">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+      <div>
+        <span class="ai-header-badge">📖 Bible & English Dictionary</span>
+        <h3 id="dictWordTitle" style="margin:2px 0 0 0; color:var(--primary); font-size:1.6rem">Word</h3>
+        <div id="dictPhonetic" style="font-size:0.85rem; color:var(--text-muted); font-style:italic; margin-top:2px"></div>
+      </div>
+      <button onclick="closeModal('dictionaryModal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted)">&times;</button>
+    </div>
+
+    <div id="dictLoader" class="scanning-loader" style="display:none; margin-top:12px"></div>
+
+    <div id="dictContent" style="margin-top:15px; max-height:320px; overflow-y:auto"></div>
+
+    <div style="margin-top:15px; display:flex; gap:10px">
+      <input type="text" id="dictManualInput" placeholder="Type any word..." style="flex:1; font-size:0.9rem; padding:8px 12px">
+      <button onclick="lookupWord(document.getElementById('dictManualInput').value)" class="primary-btn" style="width:auto; padding:8px 16px">Search</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUILDER MODAL -->
 <div class="modal" id="builderModal">
     <div class="modal-content">
         <h3 style="margin-top:0">🛠 Build Case Study</h3>
@@ -312,6 +806,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     </div>
 </div>
 
+<!-- COMPARE MODAL -->
 <div class="modal" id="compareModal">
   <div class="modal-content">
     <h3 style="margin-top:0">⚖️ Compare</h3>
@@ -327,7 +822,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, doc, onSnapshot, setDoc, collection, addDoc, query, orderBy, limit, serverTimestamp, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDbdmfhw6hfeCi88ua4OjfVUE2Ckv8hYyU",
@@ -341,34 +836,59 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  /* --- CURATED CASE DATA --- */
-  const curatedCases = {
-    PROPHET_REJECTED: {
-      title: "Prophet Rejected by His Own People",
-      description: "A recurring biblical pattern where God's messenger is dishonoured due to familiarity, unbelief, and rejection.",
-      refs: [
-        ["Mark",6,3], ["Matthew",13,54], ["Matthew",13,55], ["Matthew",13,56],
-        ["Matthew",13,57], ["Matthew",13,58], ["Luke",4,16], ["Luke",4,22],
-        ["Luke",4,24], ["John",4,44], ["Jeremiah",11,21], ["Psalm",118,22]
-      ]
+  function safeJSONParse(key, fallback) {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : fallback;
+    } catch(e) {
+      return fallback;
     }
-  };
+  }
+
+  const GLOBAL_PUBLIC_CHANNEL = "global_community";
 
   let state = {
     book: 1, chapter: 1, version: 'NKJV', 
-    highlights: JSON.parse(localStorage.getItem('highlights')) || {}, 
-    verseNotes: JSON.parse(localStorage.getItem('verseNotes')) || {},
-    versePrayers: JSON.parse(localStorage.getItem('versePrayers')) || {},
-    userCases: JSON.parse(localStorage.getItem('userCases')) || {}, 
-    currentID: localStorage.getItem('cloudID'),
+    highlights: safeJSONParse('highlights', {}), 
+    verseNotes: safeJSONParse('verseNotes', {}),
+    versePrayers: safeJSONParse('versePrayers', {}),
+    userCases: safeJSONParse('userCases', {}), 
+    userRelationships: safeJSONParse('userRelationships', {}),
+    currentID: localStorage.getItem('cloudID') || GLOBAL_PUBLIC_CHANNEL,
+    userName: localStorage.getItem('studyUserName') || 'Berean Scholar',
+    studyRoom: 'Global Room',
+    sessionId: sessionStorage.getItem('studySessionId') || ('usr_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36)),
+    attachedStudyScripture: null,
+    isHost: localStorage.getItem('studyIsHost') === 'true',
+    canSpeak: false,
+    audioRecording: null,
     serifMode: localStorage.getItem('serifMode') === 'true'
   };
+
+  sessionStorage.setItem('studySessionId', state.sessionId);
 
   let currentScriptureData = null; 
   let activeEditor = { id: null, type: null };
   let editingCaseId = null; 
   let tempCaseRefs = []; 
   let unsubscribe = null; 
+  let studyUnsubscribe = null;
+  let qnaUnsubscribe = null;
+  let presenceUnsubscribe = null;
+  let roomMetaUnsubscribe = null;
+  let transcriptUnsubscribe = null;
+  let stageUnsubscribe = null;
+  let savedSessionsUnsubscribe = null;
+  let presenceInterval = null;
+  let currentAIRelData = null; 
+  let currentAIFilter = 'ALL';
+  let editingCustomRelId = null;
+  let activeSourceRef = null;
+
+  let speechRecognition = null;
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let isTranscriptCollapsed = false;
 
   const bibleData = [
     {n:"Genesis",c:50},{n:"Exodus",c:40},{n:"Leviticus",c:27},{n:"Numbers",c:36},{n:"Deuteronomy",c:34},
@@ -388,16 +908,1473 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
   const dom = id => document.getElementById(id);
 
-  /* ------------------- RICH TEXT EDITOR LOGIC ------------------- */
-  
-  // Use execCommand to handle formatting in contenteditable div
-  window.execCmd = (command, value = null) => {
-      document.execCommand(command, false, value);
-      dom('modalInput').focus();
+  const syncChannel = 'BroadcastChannel' in window ? new BroadcastChannel('bible_pro_sync_channel') : null;
+
+  if (syncChannel) {
+      syncChannel.onmessage = (event) => {
+          if (event.data && event.data.type === 'SYNC_UPDATE' && event.data.state) {
+              const incoming = event.data.state;
+              state.highlights = incoming.highlights || {};
+              state.verseNotes = incoming.verseNotes || {};
+              state.versePrayers = incoming.versePrayers || {};
+              state.userCases = incoming.userCases || {};
+              state.userRelationships = incoming.userRelationships || {};
+              
+              localStorage.setItem('highlights', JSON.stringify(state.highlights));
+              localStorage.setItem('verseNotes', JSON.stringify(state.verseNotes));
+              localStorage.setItem('versePrayers', JSON.stringify(state.versePrayers));
+              localStorage.setItem('userCases', JSON.stringify(state.userCases));
+              localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
+
+              if (currentScriptureData) renderBible(currentScriptureData); 
+              if (dom('view-mycases') && dom('view-mycases').classList.contains('active')) renderMyCases();
+              if (dom('view-prayer') && dom('view-prayer').classList.contains('active')) renderPrayerList();
+          }
+      };
+  }
+
+  const curatedCases = {
+    PROPHET_REJECTED: {
+      title: "Prophet Rejected by His Own People",
+      description: "A recurring biblical pattern where God's messenger is dishonoured due to familiarity, unbelief, and rejection.",
+      refs: [
+        ["Mark",6,3], ["Matthew",13,54], ["Matthew",13,55], ["Matthew",13,56],
+        ["Matthew",13,57], ["Matthew",13,58], ["Luke",4,16], ["Luke",4,22],
+        ["Luke",4,24], ["John",4,44], ["Jeremiah",11,21], ["Psalm",118,22]
+      ]
+    }
   };
 
-  /* ------------------- SMART CASE LOGIC ------------------- */
-  
+  function convertSpokenNumbersToDigits(text) {
+    let lower = text.toLowerCase();
+    
+    lower = lower.replace(/\btwenty\s+one\b/g, "21").replace(/\btwenty\s+two\b/g, "22").replace(/\btwenty\s+three\b/g, "23")
+                 .replace(/\btwenty\s+four\b/g, "24").replace(/\btwenty\s+five\b/g, "25").replace(/\btwenty\s+six\b/g, "26")
+                 .replace(/\btwenty\s+seven\b/g, "27").replace(/\btwenty\s+eight\b/g, "28").replace(/\btwenty\s+nine\b/g, "29")
+                 .replace(/\bthirty\s+one\b/g, "31").replace(/\bforty\s+two\b/g, "42").replace(/\bfifty\s+zero\b/g, "50");
+
+    const numberMap = {
+      "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
+      "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17,
+      "eighteen": 18, "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70,
+      "eighty": 80, "ninety": 90, "hundred": 100
+    };
+
+    for (let word in numberMap) {
+      const reg = new RegExp(`\\b${word}\\b`, 'g');
+      lower = lower.replace(reg, numberMap[word]);
+    }
+
+    return lower;
+  }
+
+  function detectSpokenBibleReferences(rawText) {
+    if (!rawText) return { formattedHtml: '', extractedRefs: [] };
+
+    const normalized = convertSpokenNumbersToDigits(rawText);
+    const bookNamesPattern = bibleData.map(b => b.n.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&")).join('|');
+    
+    const refRegex = new RegExp(`\\b(${bookNamesPattern})\\b\\s*(?:chapter\\s+)?(\\d+)\\s*(?:verse|verses|\\:)?\\s*(\\d+)(?:\\s*(?:to|through|\\-)\\s*(\\d+))?`, 'gi');
+
+    let extractedRefs = [];
+    let formattedHtml = normalized.replace(refRegex, (match, book, chap, verseStart, verseEnd) => {
+      const formattedRef = `${book} ${chap}:${verseStart}${verseEnd ? '-' + verseEnd : ''}`;
+      extractedRefs.push(formattedRef);
+      const escapedRef = formattedRef.replace(/'/g, "\\'");
+      return `<span class="study-msg-ref" onclick="previewPassage('${escapedRef}', 'Spoken Scripture', '')">📖 ${formattedRef}</span>`;
+    });
+
+    return { formattedHtml, extractedRefs };
+  }
+
+  function saveUserName() {
+    const input = dom('studyUserName');
+    if (!input) return;
+    const name = input.value.trim() || 'Berean Scholar';
+    state.userName = name;
+    localStorage.setItem('studyUserName', name);
+    if (dom('currentUserLabel')) dom('currentUserLabel').innerText = name;
+    updatePresence();
+    toast(`Display name saved: ${name}`);
+  }
+
+  function switchStudyRoom() {
+    const input = dom('studyRoomID');
+    if (!input) return;
+    const roomName = input.value.trim() || 'Global Room';
+    leavePresence(state.studyRoom);
+    state.studyRoom = roomName;
+    if (dom('currentRoomLabel')) dom('currentRoomLabel').innerText = roomName;
+    listenToStudyRoom();
+    toast(`Joined room: ${roomName}`);
+  }
+
+  function toggleEditTopicForm() {
+    const form = dom('editTopicForm');
+    if (form) {
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+
+  async function saveRoomTopic() {
+    const topicTitle = dom('inputTopicTitle') ? dom('inputTopicTitle').value.trim() : '';
+    const focusScriptures = dom('inputFocusScriptures') ? dom('inputFocusScriptures').value.trim() : '';
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    try {
+      await setDoc(doc(db, "study_rooms", roomSlug, "meta", "topic"), {
+        title: topicTitle || "General Fellowship & Bible Discussion",
+        focusScriptures: focusScriptures || "",
+        updatedBy: state.userName || 'Berean Scholar',
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      toggleEditTopicForm();
+      toast("Room topic updated!");
+    } catch(e) {
+      console.error("Error saving topic:", e);
+      alert("Could not update topic. Check connection.");
+    }
+  }
+
+  function listenToRoomMeta() {
+    if (roomMetaUnsubscribe) roomMetaUnsubscribe();
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    roomMetaUnsubscribe = onSnapshot(doc(db, "study_rooms", roomSlug, "meta", "topic"), (docSnap) => {
+      const titleElem = dom('roomTopicTitle');
+      const focusElem = dom('roomFocusScriptures');
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (titleElem) titleElem.innerText = data.title || "General Fellowship & Bible Discussion";
+        if (focusElem) {
+          if (data.focusScriptures) {
+            const list = data.focusScriptures.split(',').map(s => s.trim()).filter(Boolean);
+            focusElem.innerHTML = list.map(ref => {
+              const esc = ref.replace(/'/g, "\\'");
+              return `<span class="study-msg-ref" onclick="previewPassage('${esc}', 'Focus Scripture', '')">📖 ${ref}</span>`;
+            }).join(' ');
+          } else {
+            focusElem.innerHTML = '<span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No focus scriptures set yet.</span>';
+          }
+        }
+      } else {
+        if (titleElem) titleElem.innerText = "General Fellowship & Bible Discussion";
+        if (focusElem) focusElem.innerHTML = '<span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No focus scriptures set yet.</span>';
+      }
+    });
+  }
+
+  function updatePresence() {
+    if (!state.sessionId) return;
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    try {
+      setDoc(doc(db, "study_rooms", roomSlug, "presence", state.sessionId), {
+        userName: state.userName || 'Berean Scholar',
+        isHost: !!state.isHost,
+        lastSeen: Date.now()
+      }, { merge: true }).catch(() => {});
+    } catch(e) {}
+  }
+
+  function leavePresence(roomName) {
+    if (!roomName || !state.sessionId) return;
+    const roomSlug = roomName.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    try {
+      deleteDoc(doc(db, "study_rooms", roomSlug, "presence", state.sessionId)).catch(() => {});
+    } catch(e) {}
+    if (presenceInterval) {
+      clearInterval(presenceInterval);
+      presenceInterval = null;
+    }
+  }
+
+  function listenToPresence() {
+    if (presenceUnsubscribe) presenceUnsubscribe();
+    if (presenceInterval) clearInterval(presenceInterval);
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    updatePresence();
+    presenceInterval = setInterval(updatePresence, 30000);
+
+    const q = collection(db, "study_rooms", roomSlug, "presence");
+    presenceUnsubscribe = onSnapshot(q, (snapshot) => {
+      const countBadge = dom('presenceCountBadge');
+      const usersList = dom('activeUsersList');
+      const now = Date.now();
+      const activeUsers = [];
+
+      snapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        if (u.lastSeen && (now - u.lastSeen < 60000)) {
+          activeUsers.push(u.userName + (u.isHost ? " 👑" : ""));
+        }
+      });
+
+      const count = Math.max(activeUsers.length, 1);
+      if (countBadge) {
+        countBadge.innerText = `🟢 ${count} Member${count > 1 ? 's' : ''} Active`;
+      }
+      if (usersList) {
+        usersList.innerText = activeUsers.length ? `In room: ${activeUsers.join(', ')}` : `In room: ${state.userName}`;
+      }
+    });
+  }
+
+  function toggleHostRole() {
+    state.isHost = !state.isHost;
+    localStorage.setItem('studyIsHost', state.isHost);
+    const btn = dom('hostToggleBtn');
+    const hostPanel = dom('hostQueuePanel');
+
+    if (state.isHost) {
+      if (btn) btn.innerText = "👑 Host Active";
+      if (hostPanel) hostPanel.style.display = 'block';
+      toast("You are now Host / Moderator of this room!");
+    } else {
+      if (btn) btn.innerText = "👑 Claim Host Role";
+      if (hostPanel) hostPanel.style.display = 'none';
+      toast("Switched to Participant Mode.");
+    }
+    updatePresence();
+  }
+
+  async function requestToSpeak() {
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    const reqBtn = dom('requestToSpeakBtn');
+
+    try {
+      await setDoc(doc(db, "study_rooms", roomSlug, "queue", state.sessionId), {
+        userName: state.userName || 'Berean Scholar',
+        sessionId: state.sessionId,
+        status: 'waiting',
+        requestedAt: serverTimestamp()
+      });
+
+      if (reqBtn) {
+        reqBtn.innerText = "⏳ Request Sent - Waiting for Host...";
+        reqBtn.style.background = "#eab308";
+        reqBtn.disabled = true;
+      }
+      toast("Request sent to host!");
+    } catch(e) {
+      console.error("Request speak error:", e);
+      alert("Error sending request to speak.");
+    }
+  }
+
+  async function stopSpeaking() {
+    state.canSpeak = false;
+    stopSpeechToText();
+    stopAudioRecording();
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    try {
+      await deleteDoc(doc(db, "study_rooms", roomSlug, "queue", state.sessionId));
+      await setDoc(doc(db, "study_rooms", roomSlug, "stage", "current"), {
+        speakerName: "Room Host (Moderator)",
+        speakerSessionId: "host",
+        updatedAt: serverTimestamp()
+      });
+    } catch(e) {}
+
+    updateMicUI(false, "Muted (Listener Mode)");
+    toast("Stopped speaking. Returned to listener mode.");
+  }
+
+  async function hostApproveSpeaker(sessionId, userName) {
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    try {
+      await setDoc(doc(db, "study_rooms", roomSlug, "stage", "current"), {
+        speakerName: userName,
+        speakerSessionId: sessionId,
+        updatedAt: serverTimestamp()
+      });
+      await deleteDoc(doc(db, "study_rooms", roomSlug, "queue", sessionId));
+      toast(`Approved ${userName} to speak!`);
+    } catch(e) { console.error(e); }
+  }
+
+  async function hostRejectSpeaker(sessionId) {
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    try {
+      await deleteDoc(doc(db, "study_rooms", roomSlug, "queue", sessionId));
+      toast("Speaking request removed.");
+    } catch(e) {}
+  }
+
+  async function hostMuteCurrentSpeaker() {
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    try {
+      await setDoc(doc(db, "study_rooms", roomSlug, "stage", "current"), {
+        speakerName: "Room Host (Moderator)",
+        speakerSessionId: "host",
+        updatedAt: serverTimestamp()
+      });
+      toast("Current speaker muted.");
+    } catch(e) {}
+  }
+
+  function updateMicUI(canSpeak, statusText) {
+    const badge = dom('micStatusBadge');
+    const reqBtn = dom('requestToSpeakBtn');
+    const stopBtn = dom('stopSpeakingBtn');
+
+    if (badge) badge.innerText = statusText || (canSpeak ? "🔴 Currently Speaking (Mic Active)" : "🔇 Muted");
+
+    if (canSpeak) {
+      if (reqBtn) reqBtn.style.display = 'none';
+      if (stopBtn) stopBtn.style.display = 'block';
+    } else {
+      if (reqBtn) {
+        reqBtn.style.display = 'block';
+        reqBtn.innerText = "✋ Request to Speak";
+        reqBtn.style.background = "#0284c7";
+        reqBtn.disabled = false;
+      }
+      if (stopBtn) stopBtn.style.display = 'none';
+    }
+  }
+
+  function listenToStageAndQueue() {
+    if (stageUnsubscribe) stageUnsubscribe();
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    stageUnsubscribe = onSnapshot(doc(db, "study_rooms", roomSlug, "stage", "current"), (docSnap) => {
+      let speakerName = "Room Host (Moderator)";
+      let speakerId = "host";
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        speakerName = data.speakerName || "Room Host";
+        speakerId = data.speakerSessionId || "host";
+      }
+
+      if (dom('currentSpeakerName')) {
+        dom('currentSpeakerName').innerText = `🎙️ ${speakerName}`;
+      }
+
+      if (speakerId === state.sessionId) {
+        state.canSpeak = true;
+        updateMicUI(true, "🔴 Currently Speaking (You can now speak)");
+        startSpeechToText();
+        startAudioRecording();
+      } else {
+        if (state.canSpeak) {
+          state.canSpeak = false;
+          stopSpeechToText();
+          stopAudioRecording();
+          toast("Your speaking time has ended.");
+        }
+        updateMicUI(false, "🔇 Muted (Listener Mode)");
+      }
+
+      if (dom('currentSpeakerActions')) {
+        if (state.isHost && speakerId !== 'host') {
+          dom('currentSpeakerActions').innerHTML = `
+            <button onclick="hostMuteCurrentSpeaker()" style="font-size:0.75rem; padding:4px 10px; background:#ef4444; color:white; border:none; border-radius:6px;">🔇 Mute / Stop Speaker</button>
+          `;
+        } else {
+          dom('currentSpeakerActions').innerHTML = '';
+        }
+      }
+    });
+
+    const q = query(collection(db, "study_rooms", roomSlug, "queue"), orderBy("requestedAt", "asc"));
+    onSnapshot(q, (snapshot) => {
+      const qList = dom('speakingQueueList');
+      if (!qList) return;
+
+      if (snapshot.empty) {
+        qList.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No active speaking requests.</div>';
+        return;
+      }
+
+      let html = '';
+      let index = 1;
+      snapshot.forEach((docSnap) => {
+        const qData = docSnap.data();
+        const sid = docSnap.id;
+
+        html += `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:6px 10px; border-radius:8px; font-size:0.85rem;">
+            <span><b>${index}. ${qData.userName}</b> <small style="color:var(--text-muted)">(Waiting)</small></span>
+            ${state.isHost ? `
+              <div style="display:flex; gap:4px;">
+                <button onclick="hostApproveSpeaker('${sid}', '${qData.userName.replace(/'/g, "\\'")}')" style="font-size:0.72rem; padding:3px 8px; background:#16a34a; color:white; border:none; border-radius:4px;">Allow</button>
+                <button onclick="hostRejectSpeaker('${sid}')" style="font-size:0.72rem; padding:3px 8px; background:#ef4444; color:white; border:none; border-radius:4px;">Reject</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        index++;
+      });
+      qList.innerHTML = html;
+    });
+  }
+
+  function startSpeechToText() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return console.log("Speech recognition not supported in browser.");
+
+    try {
+      if (speechRecognition) speechRecognition.stop();
+      speechRecognition = new SpeechRecognition();
+      speechRecognition.continuous = true;
+      speechRecognition.interimResults = false;
+      speechRecognition.lang = 'en-US';
+
+      speechRecognition.onresult = (event) => {
+        const lastIndex = event.results.length - 1;
+        const transcriptText = event.results[lastIndex][0].transcript.trim();
+
+        if (transcriptText) {
+          sendTranscriptEntry(transcriptText);
+        }
+      };
+
+      speechRecognition.onerror = (e) => console.log("Speech recognition error:", e);
+      speechRecognition.start();
+    } catch(e) { console.error(e); }
+  }
+
+  function stopSpeechToText() {
+    if (speechRecognition) {
+      try { speechRecognition.stop(); } catch(e) {}
+      speechRecognition = null;
+    }
+  }
+
+  async function sendTranscriptEntry(text) {
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    const parsed = detectSpokenBibleReferences(text);
+
+    try {
+      await addDoc(collection(db, "study_rooms", roomSlug, "transcripts"), {
+        userName: state.userName || 'Berean Scholar',
+        rawText: text,
+        formattedText: parsed.formattedHtml || text,
+        references: parsed.extractedRefs || [],
+        timestamp: serverTimestamp()
+      });
+    } catch(e) { console.error("Transcript send error:", e); }
+  }
+
+  function toggleTranscriptPanel() {
+    const body = dom('liveTranscriptBody');
+    const btn = dom('transcriptToggleBtn');
+    isTranscriptCollapsed = !isTranscriptCollapsed;
+
+    if (body) body.style.display = isTranscriptCollapsed ? 'none' : 'block';
+    if (btn) btn.innerText = isTranscriptCollapsed ? '▲ Expand' : '▼ Collapse';
+  }
+
+  function listenToLiveTranscripts() {
+    if (transcriptUnsubscribe) transcriptUnsubscribe();
+    const feed = dom('transcriptFeed');
+    if (!feed) return;
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    const q = query(collection(db, "study_rooms", roomSlug, "transcripts"), orderBy("timestamp", "asc"), limit(60));
+
+    transcriptUnsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        feed.innerHTML = `
+          <div style="text-align:center; padding:15px; color:var(--text-muted); font-size:0.85rem; font-style:italic;">
+            Live speech-to-text transcript will appear here automatically when members speak...
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      snapshot.forEach((docSnap) => {
+        const tData = docSnap.data();
+        const parsed = detectSpokenBibleReferences(tData.rawText || tData.formattedText || '');
+
+        html += `
+          <div class="transcript-card">
+            <div class="transcript-speaker">🎙️ ${tData.userName || 'Speaker'}</div>
+            <div class="transcript-text">${parsed.formattedHtml || tData.formattedText || tData.rawText}</div>
+          </div>
+        `;
+      });
+      feed.innerHTML = html;
+      feed.scrollTop = feed.scrollHeight;
+    });
+  }
+
+  async function startAudioRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+      mediaRecorder.start();
+    } catch(e) { console.error("Audio recording error:", e); }
+  }
+
+  function stopAudioRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      try {
+        mediaRecorder.stop();
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          state.audioRecording = blob;
+        };
+      } catch(e) {}
+    }
+  }
+
+  async function saveStudySession() {
+    if (!state.isHost) return alert("Only the room host can save a study session.");
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    const title = prompt("Enter Title for Saved Study Session:", `${state.studyRoom} - ${new Date().toLocaleDateString()}`);
+    if (!title) return;
+
+    try {
+      await addDoc(collection(db, "study_rooms", roomSlug, "saved_sessions"), {
+        title: title,
+        roomName: state.studyRoom,
+        hostName: state.userName,
+        savedAt: new Date().toISOString(),
+        dateStr: new Date().toLocaleDateString(),
+        timeStr: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+      });
+
+      toast("Study Session Saved!");
+    } catch(e) {
+      console.error("Save session error:", e);
+      alert("Error saving session.");
+    }
+  }
+
+  function listenToSavedSessions() {
+    if (savedSessionsUnsubscribe) savedSessionsUnsubscribe();
+    const feed = dom('savedSessionsFeed');
+    if (!feed) return;
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    const q = query(collection(db, "study_rooms", roomSlug, "saved_sessions"), orderBy("savedAt", "desc"), limit(20));
+
+    savedSessionsUnsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        feed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session" button.</div>';
+        return;
+      }
+
+      let html = '';
+      snapshot.forEach((docSnap) => {
+        const sData = docSnap.data();
+
+        html += `
+          <div class="controls-card" style="border-left:4px solid #16a34a; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <b style="font-size:1rem; color:var(--primary);">${sData.title}</b>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">
+                  📅 ${sData.dateStr} at ${sData.timeStr} | Host: ${sData.hostName}
+                </div>
+              </div>
+              <span style="font-size:0.75rem; font-weight:bold; background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:12px;">📼 Saved Session</span>
+            </div>
+          </div>
+        `;
+      });
+      feed.innerHTML = html;
+    });
+  }
+
+  function populateStudyBookSelect() {
+    const sSelect = dom('studyBookSelect');
+    if (sSelect && sSelect.options.length === 0) {
+      bibleData.forEach((b, i) => sSelect.add(new Option(b.n, i + 1)));
+      updateStudyRoomChapters();
+    }
+  }
+
+  function updateStudyRoomChapters() {
+    const bIdx = dom('studyBookSelect') ? parseInt(dom('studyBookSelect').value) : 1;
+    const count = bibleData[bIdx - 1] ? bibleData[bIdx - 1].c : 50;
+    const cSelect = dom('studyChapSelect');
+    if (cSelect) {
+      cSelect.innerHTML = "";
+      for (let i = 1; i <= count; i++) cSelect.add(new Option(`Ch ${i}`, i));
+    }
+  }
+
+  async function attachFullScriptureToRoom() {
+    const bIdx = dom('studyBookSelect') ? parseInt(dom('studyBookSelect').value) : 1;
+    const chap = dom('studyChapSelect') ? parseInt(dom('studyChapSelect').value) : 1;
+    const vInput = dom('studyVerseNum') ? dom('studyVerseNum').value.trim() : "1";
+    const bName = bibleData[bIdx - 1] ? bibleData[bIdx - 1].n : "Genesis";
+
+    dom('attachedScripturePreview').innerHTML = '⏳ Fetching full scripture text from Bible...';
+    dom('attachedScriptureBox').style.display = 'block';
+
+    try {
+      let fullText = "";
+      if (vInput.includes("-")) {
+        const [vStart, vEnd] = vInput.split("-").map(x => parseInt(x.trim()));
+        const res = await fetch(`https://bolls.life/get-chapter/${state.version}/${bIdx}/${chap}/`);
+        const chData = await res.json();
+        const filtered = chData.filter(x => x.verse >= vStart && x.verse <= vEnd);
+        fullText = filtered.map(x => `<b>${x.verse}</b> ${x.text}`).join(" ");
+      } else {
+        const vNum = parseInt(vInput) || 1;
+        const res = await fetch(`https://bolls.life/get-verse/${state.version}/${bIdx}/${chap}/${vNum}/`);
+        if (res.ok) {
+          const vData = await res.json();
+          fullText = vData.text;
+        } else {
+          const chRes = await fetch(`https://bolls.life/get-chapter/${state.version}/${bIdx}/${chap}/`);
+          const chData = await chRes.json();
+          const match = chData.find(x => x.verse == vNum);
+          fullText = match ? match.text : "Scripture passage loaded.";
+        }
+      }
+
+      const cleanText = fullText.replace(/<[^>]*>/g, '');
+      const refStr = `${bName} ${chap}:${vInput} (${state.version})`;
+
+      state.attachedStudyScripture = { ref: refStr, text: cleanText };
+
+      dom('attachedScripturePreview').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start">
+          <b>📖 ${refStr}</b>
+          <span onclick="clearAttachedScripture()" style="color:red; cursor:pointer; font-weight:bold; font-size:1.1rem">✖</span>
+        </div>
+        <div style="font-style:italic; font-size:0.88rem; margin-top:4px; line-height:1.4">"${cleanText}"</div>
+      `;
+    } catch(e) {
+      const refStr = `${bName} ${chap}:${vInput}`;
+      dom('attachedScripturePreview').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start">
+          <b>📖 ${refStr}</b>
+          <span onclick="clearAttachedScripture()" style="color:red; cursor:pointer; font-weight:bold">✖</span>
+        </div>
+      `;
+      state.attachedStudyScripture = { ref: refStr, text: "" };
+    }
+  }
+
+  function clearAttachedScripture() {
+    state.attachedStudyScripture = null;
+    if (dom('attachedScriptureBox')) dom('attachedScriptureBox').style.display = 'none';
+    if (dom('attachedScripturePreview')) dom('attachedScripturePreview').innerHTML = '';
+  }
+
+  function switchStudySubTab(tab) {
+    const feedCont = dom('studyFeedContainer');
+    const qnaCont = dom('studyQnaContainer');
+    const savedCont = dom('studySavedContainer');
+    const btnFeed = dom('btnFeedTab');
+    const btnQna = dom('btnQnaTab');
+    const btnSaved = dom('btnSavedTab');
+
+    if (tab === 'feed') {
+      feedCont.style.display = 'block';
+      qnaCont.style.display = 'none';
+      savedCont.style.display = 'none';
+      btnFeed.style.background = '#0284c7'; btnFeed.style.color = 'white';
+      btnQna.style.background = 'var(--card)'; btnQna.style.color = 'var(--text)';
+      btnSaved.style.background = 'var(--card)'; btnSaved.style.color = 'var(--text)';
+    } else if (tab === 'qna') {
+      feedCont.style.display = 'none';
+      qnaCont.style.display = 'block';
+      savedCont.style.display = 'none';
+      btnQna.style.background = '#0284c7'; btnQna.style.color = 'white';
+      btnFeed.style.background = 'var(--card)'; btnFeed.style.color = 'var(--text)';
+      btnSaved.style.background = 'var(--card)'; btnSaved.style.color = 'var(--text)';
+      listenToStudyQna();
+    } else {
+      feedCont.style.display = 'none';
+      qnaCont.style.display = 'none';
+      savedCont.style.display = 'block';
+      btnSaved.style.background = '#0284c7'; btnSaved.style.color = 'white';
+      btnFeed.style.background = 'var(--card)'; btnFeed.style.color = 'var(--text)';
+      btnQna.style.background = 'var(--card)'; btnQna.style.color = 'var(--text)';
+      listenToSavedSessions();
+    }
+  }
+
+  function listenToStudyRoom() {
+    if (studyUnsubscribe) studyUnsubscribe();
+    populateStudyBookSelect();
+    const feed = dom('studyFeed');
+    if (!feed) return;
+    feed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">Connecting to live study stream...</div>';
+
+    listenToPresence();
+    listenToRoomMeta();
+    listenToStageAndQueue();
+    listenToLiveTranscripts();
+
+    try {
+      const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+      const q = query(collection(db, "study_rooms", roomSlug, "messages"), orderBy("timestamp", "desc"), limit(50));
+      
+      studyUnsubscribe = onSnapshot(q, (snapshot) => {
+        if (snapshot.empty) {
+          feed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">No contributions yet in this room. Be the first to share an insight!</div>';
+          return;
+        }
+
+        let html = '';
+        snapshot.forEach((docSnap) => {
+          const msg = docSnap.data();
+          const timeStr = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
+          
+          let scriptureHtml = '';
+          if (msg.verseText) {
+            const escapedRef = (msg.verseRef || '').replace(/'/g, "\\'");
+            scriptureHtml = `
+              <div class="study-scripture-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
+                  <b>📖 ${msg.verseRef || 'Scripture Passage'}</b>
+                  <span onclick="previewPassage('${escapedRef}', 'Full Passage', '')" style="cursor:pointer; font-size:0.75rem; color:#0284c7; font-weight:bold">Read Context ➡</span>
+                </div>
+                "${wrapWords(msg.verseText)}"
+              </div>
+            `;
+          } else if (msg.verseRef) {
+            const escapedRef = msg.verseRef.replace(/'/g, "\\'");
+            scriptureHtml = `<span class="study-msg-ref" onclick="previewPassage('${escapedRef}', 'Study Room Ref', '')">📖 ${msg.verseRef}</span>`;
+          }
+
+          html += `
+            <div class="study-msg-card">
+              <div class="study-msg-header">
+                <span class="study-user-badge">👤 ${msg.userName || 'Anonymous'}</span>
+                <span class="study-msg-time">${timeStr}</span>
+              </div>
+              ${scriptureHtml}
+              <div class="study-msg-text">${wrapWords(msg.text || '')}</div>
+            </div>
+          `;
+        });
+        feed.innerHTML = html;
+      }, (e) => {
+        console.error("Study room snapshot error:", e);
+        feed.innerHTML = '<div style="text-align:center; padding:20px; color:red">Error loading study room updates.</div>';
+      });
+    } catch(e) {
+      console.error(e);
+      feed.innerHTML = '<div style="text-align:center; padding:20px; color:red">Connection error.</div>';
+    }
+  }
+
+  async function sendStudyContribution() {
+    const text = dom('studyInputText').value.trim();
+    const attached = state.attachedStudyScripture;
+
+    if (!text && !attached) return alert("Please type your insight or attach a scripture passage.");
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    try {
+      await addDoc(collection(db, "study_rooms", roomSlug, "messages"), {
+        userName: state.userName || 'Berean Scholar',
+        verseRef: attached ? attached.ref : '',
+        verseText: attached ? attached.text : '',
+        text: text,
+        timestamp: serverTimestamp()
+      });
+
+      dom('studyInputText').value = '';
+      clearAttachedScripture();
+      toast("Contribution posted live!");
+      updatePresence();
+    } catch(e) {
+      console.error("Post error:", e);
+      alert("Error posting contribution. Please check network connection.");
+    }
+  }
+
+  async function askStudyQuestion() {
+    const qText = dom('qnaQuestionInput').value.trim();
+    const ref = dom('qnaVerseRef').value.trim();
+
+    if (!qText) return alert("Please write your question first.");
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    try {
+      await addDoc(collection(db, "study_rooms", roomSlug, "questions"), {
+        userName: state.userName || 'Berean Scholar',
+        questionText: qText,
+        verseRef: ref || '',
+        answers: [],
+        timestamp: serverTimestamp()
+      });
+
+      dom('qnaQuestionInput').value = '';
+      dom('qnaVerseRef').value = '';
+      toast("Question posted!");
+    } catch(e) {
+      console.error("Ask error:", e);
+      alert("Error posting question.");
+    }
+  }
+
+  function listenToStudyQna() {
+    if (qnaUnsubscribe) qnaUnsubscribe();
+    const qFeed = dom('qnaFeed');
+    if (!qFeed) return;
+
+    qFeed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">Loading Q&A discussions...</div>';
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    const q = query(collection(db, "study_rooms", roomSlug, "questions"), orderBy("timestamp", "desc"), limit(40));
+
+    qnaUnsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        qFeed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">No questions asked yet in this room. Be the first to ask!</div>';
+        return;
+      }
+
+      let html = '';
+      snapshot.forEach((docSnap) => {
+        const qData = docSnap.data();
+        const qId = docSnap.id;
+        const timeStr = qData.timestamp ? new Date(qData.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
+        const refBadge = qData.verseRef ? `<span class="study-msg-ref" onclick="previewPassage('${qData.verseRef.replace(/'/g, "\\'")}', 'Question Ref', '')">📖 ${qData.verseRef}</span>` : '';
+
+        let answersHtml = '';
+        if (qData.answers && qData.answers.length > 0) {
+          qData.answers.forEach(ans => {
+            answersHtml += `
+              <div class="qna-answer-item">
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:2px">
+                  <b>💡 ${ans.userName || 'Member'}</b>
+                  <span>${ans.time || ''}</span>
+                </div>
+                <div>${wrapWords(ans.text)}</div>
+              </div>
+            `;
+          });
+        } else {
+          answersHtml = '<div style="font-size:0.8rem; color:var(--text-muted); font-style:italic; margin-top:6px;">No answers yet. Share your answer below!</div>';
+        }
+
+        html += `
+          <div class="qna-card">
+            <div class="study-msg-header">
+              <span class="study-user-badge">❓ Asked by ${qData.userName || 'Anonymous'}</span>
+              <span class="study-msg-time">${timeStr}</span>
+            </div>
+            ${refBadge}
+            <div class="qna-question-text">${wrapWords(qData.questionText)}</div>
+            
+            <div style="margin-top:10px; border-top:1px dashed var(--border); padding-top:8px;">
+              <span style="font-size:0.78rem; font-weight:bold; color:var(--text-muted)">Answers (${qData.answers ? qData.answers.length : 0}):</span>
+              ${answersHtml}
+            </div>
+
+            <div style="margin-top:10px; display:flex; gap:6px;">
+              <input type="text" id="answerInput_${qId}" placeholder="Write your answer..." style="flex:1; font-size:0.85rem; padding:8px 10px;">
+              <button onclick="submitAnswerToQuestion('${qId}')" class="primary-btn" style="width:auto; padding:8px 14px; background:#0284c7; font-size:0.82rem;">Answer</button>
+            </div>
+          </div>
+        `;
+      });
+
+      qFeed.innerHTML = html;
+    }, (e) => console.error("Q&A error:", e));
+  }
+
+  async function submitAnswerToQuestion(qId) {
+    const input = dom(`answerInput_${qId}`);
+    if (!input) return;
+    const ansText = input.value.trim();
+    if (!ansText) return alert("Please type your answer.");
+
+    const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    try {
+      const qRef = doc(db, "study_rooms", roomSlug, "questions", qId);
+      await updateDoc(qRef, {
+        answers: arrayUnion({
+          userName: state.userName || 'Berean Scholar',
+          text: ansText,
+          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        })
+      });
+
+      input.value = '';
+      toast("Answer posted!");
+    } catch(e) {
+      console.error("Answer error:", e);
+      alert("Error submitting answer.");
+    }
+  }
+
+  function cleanWord(word) {
+    if (!word) return '';
+    return word.replace(/[^a-zA-Z0-9'’-]/g, '').trim();
+  }
+
+  function wrapWords(text) {
+    if (!text) return '';
+    return text.replace(/(<[^>]+>)|(&[a-zA-Z0-9#]+;)|([a-zA-Z0-9'’-]+)/g, (match, tag, entity, word) => {
+      if (tag || entity) return match;
+      const sanitized = cleanWord(word);
+      if (!sanitized) return word;
+      return `<span class="dict-word" onclick="event.stopPropagation(); lookupWord('${sanitized}')">${word}</span>`;
+    });
+  }
+
+  async function lookupWord(rawWord) {
+    const word = cleanWord(rawWord);
+    if (!word) return;
+
+    if (dom('dictWordTitle')) dom('dictWordTitle').innerText = word;
+    if (dom('dictPhonetic')) dom('dictPhonetic').innerText = '';
+    if (dom('dictContent')) dom('dictContent').innerHTML = '';
+    if (dom('dictManualInput')) dom('dictManualInput').value = word;
+    if (dom('dictLoader')) dom('dictLoader').style.display = 'block';
+    if (dom('dictionaryModal')) dom('dictionaryModal').classList.add('open');
+
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`);
+      if (!res.ok) throw new Error("Word not found");
+      const data = await res.json();
+
+      if (dom('dictLoader')) dom('dictLoader').style.display = 'none';
+      renderDictionaryResults(data);
+    } catch (e) {
+      if (dom('dictLoader')) dom('dictLoader').style.display = 'none';
+      if (dom('dictContent')) {
+        dom('dictContent').innerHTML = `
+          <div style="padding:15px; text-align:center; color:var(--text-muted)">
+            <div style="font-size:2rem; margin-bottom:8px">🔍</div>
+            <b>No definition found for "${word}"</b>
+            <p style="font-size:0.85rem; margin-top:6px">Try searching for the root or singular form of the word above.</p>
+          </div>
+        `;
+      }
+    }
+  }
+
+  function renderDictionaryResults(data) {
+    let html = '';
+    const entry = data[0];
+
+    if (entry.phonetic || (entry.phonetics && entry.phonetics.find(p => p.text))) {
+      const phoneticText = entry.phonetic || entry.phonetics.find(p => p.text).text;
+      dom('dictPhonetic').innerText = phoneticText ? `Pronunciation: ${phoneticText}` : '';
+    }
+
+    if (entry.meanings && entry.meanings.length > 0) {
+      entry.meanings.forEach(meaning => {
+        html += `<div style="margin-top:12px"><span class="dict-pos">${meaning.partOfSpeech}</span></div>`;
+        if (meaning.definitions) {
+          meaning.definitions.slice(0, 3).forEach((def, idx) => {
+            html += `
+              <div class="dict-def-item">
+                <div style="font-size:0.95rem; line-height:1.4">${idx + 1}. ${def.definition}</div>
+                ${def.example ? `<div style="font-size:0.85rem; color:var(--text-muted); font-style:italic; margin-top:4px">" ${def.example} "</div>` : ''}
+              </div>
+            `;
+          });
+        }
+      });
+    }
+
+    dom('dictContent').innerHTML = html;
+  }
+
+  function execCmd(command, value = null) {
+      document.execCommand(command, false, value);
+      dom('modalInput').focus();
+  }
+
+  const curatedAIRelationships = {
+    "Psalms 90:1": {
+      reference: "Psalms 90:1",
+      analysis: {
+        mainMeaning: "God is revealed as the eternal, unwavering dwelling place and sanctuary for His people across every generation.",
+        themes: ["God's Faithfulness", "God as Dwelling Place", "Eternity of God", "Protection & Security", "Generational Covenant"],
+        scenario: "God's people taking refuge in Him amidst human transience and mortal limitation.",
+        teachings: ["God provides ultimate spiritual safety", "Earthly homes are temporal, God is eternal", "Faithfulness spans all generations"],
+        applications: ["Finding emotional and spiritual stability in God during life transitions", "Trusting God with family legacy"]
+      },
+      relationships: [
+        {
+          reference: "Psalms 91:1",
+          type: "Same Theme",
+          score: 95,
+          explanation: "Both passages present God as a place of safety, protection, and security for His people."
+        },
+        {
+          reference: "Deuteronomy 33:27",
+          type: "Direct Parallel",
+          score: 94,
+          explanation: "Both passages describe the eternal God as the dwelling place and security of His people."
+        },
+        {
+          reference: "Psalms 46:1",
+          type: "Same Concept",
+          score: 88,
+          explanation: "Both passages portray God as a dependable refuge and present help in times of trouble."
+        },
+        {
+          reference: "Psalms 71:3",
+          type: "Same Teaching",
+          score: 85,
+          explanation: "Both passages articulate coming to God continually as a strong habitation and refuge."
+        },
+        {
+          reference: "John 15:4",
+          type: "Theological Connection",
+          score: 78,
+          explanation: "Jesus expands the concept of God as a dwelling place into abiding in Christ spiritually."
+        }
+      ]
+    },
+    "John 3:16": {
+      reference: "John 3:16",
+      analysis: {
+        mainMeaning: "The supreme demonstration of God's sacrificial love for humanity through giving His Son for eternal life.",
+        themes: ["God's Love", "Salvation", "Eternal Life", "Faith & Trust", "Grace"],
+        scenario: "Jesus explaining God's redemptive plan for the whole world to Nicodemus.",
+        teachings: ["Salvation is rooted in God's love", "Belief in Christ yields eternal life", "Grace is universally offered"],
+        applications: ["Receiving God's love without fear", "Sharing the gospel message with others"]
+      },
+      relationships: [
+        {
+          reference: "Romans 5:8",
+          type: "Direct Parallel",
+          score: 96,
+          explanation: "Both passages highlight God demonstrating His love by giving His Son for sinners."
+        },
+        {
+          reference: "1 John 4:9",
+          type: "Direct Parallel",
+          score: 95,
+          explanation: "Both Scriptures teach that God manifested His love by sending His Son that we might live through Him."
+        },
+        {
+          reference: "Ephesians 2:4-5",
+          type: "Same Theme",
+          score: 90,
+          explanation: "Both emphasize God's great love making us spiritually alive through Christ."
+        },
+        {
+          reference: "Romans 8:32",
+          type: "Theological Connection",
+          score: 87,
+          explanation: "Reflects the fatherly sacrifice where God did not spare His Son but gave Him up for us all."
+        }
+      ]
+    },
+    "Psalms 23:1": {
+      reference: "Psalms 23:1",
+      analysis: {
+        mainMeaning: "God's personal, loving, and complete providential care for the believer as a Shepherd.",
+        themes: ["Divine Provision", "God as Shepherd", "Sufficiency", "Trust", "Peace"],
+        scenario: "David reflecting on God's faithful guidance through sheep-herding imagery.",
+        teachings: ["God provides for all spiritual and physical needs", "In God, we lack no essential good"],
+        applications: ["Resting in God's provision during financial or emotional distress"]
+      },
+      relationships: [
+        {
+          reference: "John 10:11",
+          type: "Prophecy / Fulfillment",
+          score: 96,
+          explanation: "Jesus fulfills the Old Testament shepherd revelation by declaring Himself the Good Shepherd who lays down His life."
+        },
+        {
+          reference: "Ezekiel 34:12",
+          type: "Direct Parallel",
+          score: 92,
+          explanation: "Describes God seeking out His flock and caring for His sheep in a dark day."
+        },
+        {
+          reference: "Philippians 4:19",
+          type: "Same Teaching",
+          score: 89,
+          explanation: "Teaches that God will supply all needs according to His riches in glory in Christ Jesus."
+        },
+        {
+          reference: "1 Peter 2:25",
+          type: "Theological Connection",
+          score: 84,
+          explanation: "Refers to believers returning to the Shepherd and Overseer of their souls."
+        }
+      ]
+    }
+  };
+
+  function getCacheKey(bookName, chapter, verse) {
+    return `ai_rel_${bookName}_${chapter}_${verse}`;
+  }
+
+  function getCachedAIRelationships(bookName, chapter, verse) {
+    const key = getCacheKey(bookName, chapter, verse);
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+    return null;
+  }
+
+  function setCachedAIRelationships(bookName, chapter, verse, data) {
+    const key = getCacheKey(bookName, chapter, verse);
+    data.generatedAt = new Date().toISOString();
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  async function generateAIRelationships(bookName, chapter, verse, verseText) {
+    const ref = `${bookName} ${chapter}:${verse}`;
+    if (curatedAIRelationships[ref]) return curatedAIRelationships[ref];
+
+    const cached = getCachedAIRelationships(bookName, chapter, verse);
+    if (cached) return cached;
+
+    const textLower = verseText.toLowerCase();
+    let themes = [];
+    let mainMeaning = "This passage provides key spiritual instruction and divine insight.";
+    let relationships = [];
+    let scenario = "A biblical declaration or dialogue providing divine context.";
+    let teachings = [];
+    let applications = [];
+
+    if (textLower.includes("lord") || textLower.includes("god") || textLower.includes("father")) {
+      themes.push("God's Character", "Divine Authority");
+    }
+    if (textLower.includes("love") || textLower.includes("merc") || textLower.includes("grace") || textLower.includes("kind")) {
+      themes.push("Divine Love & Grace", "Compassion");
+      mainMeaning = "The passage highlights the depths of God's love, mercy, and grace towards believers.";
+      teachings.push("God's character is fundamentally rooted in steadfast love.");
+      applications.push("Extending forgiveness and grace in everyday relationships.");
+      relationships.push(
+        { reference: "1 John 4:8", type: "Direct Parallel", score: 92, explanation: "Both passages emphasize that God's nature is love." },
+        { reference: "Ephesians 2:4", type: "Same Theme", score: 88, explanation: "Both focus on God's abundant mercy and great love." },
+        { reference: "Psalms 103:8", type: "Same Teaching", score: 85, explanation: "Describes the Lord as merciful, gracious, and slow to anger." }
+      );
+    } else if (textLower.includes("fear") || textLower.includes("afraid") || textLower.includes("peace") || textLower.includes("comfort")) {
+      themes.push("Peace over Fear", "Trust in Trials", "Comfort");
+      mainMeaning = "Encourages believers to replace fear with trusting faith in God's reassuring presence.";
+      teachings.push("God's presence brings true peace that overrides earthly fear.");
+      applications.push("Meditating on God's promises during anxious moments.");
+      relationships.push(
+        { reference: "Isaiah 41:10", type: "Direct Parallel", score: 94, explanation: "Both Scriptures command believers not to fear because God is with them." },
+        { reference: "Philippians 4:6-7", type: "Practical Application", score: 90, explanation: "Provides the practical key to replacing anxiety with prayer and receiving divine peace." },
+        { reference: "2 Timothy 1:7", type: "Same Teaching", score: 86, explanation: "Teaches that God has not given a spirit of fear, but of power, love, and a sound mind." }
+      );
+    } else if (textLower.includes("pray") || textLower.includes("ask") || textLower.includes("seek") || textLower.includes("call")) {
+      themes.push("Prayer & Supplication", "Communion with God", "Faith");
+      mainMeaning = "Instructs believers on the power, continuous necessity, and posture of prayer.";
+      teachings.push("God listens attentively to the earnest prayers of those who seek Him.");
+      applications.push("Maintaining a daily habit of prayer and intercession.");
+      relationships.push(
+        { reference: "Matthew 7:7", type: "Direct Parallel", score: 93, explanation: "Both encourage believers to ask, seek, and knock with confidence." },
+        { reference: "1 Thessalonians 5:17", type: "Same Teaching", score: 89, explanation: "Exhorts believers to maintain an unceasing spirit of prayer." },
+        { reference: "Jeremiah 29:12", type: "Same Scenario", score: 84, explanation: "Promises that when believers call upon God and pray, He will listen." }
+      );
+    } else if (textLower.includes("light") || textLower.includes("dark") || textLower.includes("walk") || textLower.includes("way")) {
+      themes.push("Spiritual Guidance", "Righteousness", "Truth");
+      mainMeaning = "Illuminates the path of divine truth and righteous living against spiritual darkness.";
+      teachings.push("God's word serves as a moral lamp to navigate life's decisions.");
+      applications.push("Testing choices against God's revealed Word.");
+      relationships.push(
+        { reference: "Psalms 119:105", type: "Direct Parallel", score: 95, explanation: "Both portray God's word as a lamp to guide our footsteps." },
+        { reference: "John 8:12", type: "Theological Connection", score: 91, explanation: "Jesus declares Himself the Light of the world who prevents walking in darkness." },
+        { reference: "Proverbs 3:5-6", type: "Practical Application", score: 87, explanation: "Teaches trusting God to direct and straighten life's paths." }
+      );
+    } else {
+      themes.push("Faith & Obedience", "Spiritual Growth", "God's Sovereignty");
+      mainMeaning = `Presents a foundational biblical truth regarding faith, obedience, and God's wisdom in ${bookName}.`;
+      teachings.push("Faithful alignment with God's word brings spiritual clarity.");
+      applications.push("Applying biblical principles consistently in day-to-day decisions.");
+      relationships.push(
+        { reference: "Hebrews 11:1", type: "Same Theme", score: 88, explanation: "Connects with the core principle of living and walking by faith." },
+        { reference: "James 1:22", type: "Practical Application", score: 85, explanation: "Emphasizes being a doer of the Word and not a hearer only." },
+        { reference: "Romans 8:28", type: "Theological Connection", score: 82, explanation: "Reflects God working all things together for good for those who love Him." }
+      );
+    }
+
+    const generatedData = {
+      reference: ref,
+      analysis: { mainMeaning, themes, scenario, teachings, applications },
+      relationships
+    };
+
+    setCachedAIRelationships(bookName, chapter, verse, generatedData);
+    return generatedData;
+  }
+
+  async function openAIRelationships(bookName, chapter, verse, verseText) {
+    dom('aiRelModalRef').innerText = `${bookName} ${chapter}:${verse}`;
+    dom('aiRelModalText').innerText = `"${verseText.replace(/<[^>]*>/g, '')}"`;
+    dom('aiRelModal').classList.add('open');
+    dom('aiRelList').innerHTML = '';
+    dom('exploreTags').innerHTML = '';
+    dom('aiRelLoader').style.display = 'block';
+    dom('aiMeaningText').innerText = "Analyzing spiritual meaning and context...";
+
+    currentAIFilter = 'ALL';
+    document.querySelectorAll('.ai-filter-chip').forEach(btn => btn.classList.remove('active'));
+    if (document.querySelector('.ai-filter-chip')) document.querySelector('.ai-filter-chip').classList.add('active');
+
+    try {
+      const data = await generateAIRelationships(bookName, chapter, verse, verseText);
+      currentAIRelData = data;
+      renderAIRelationships(data, 'ALL');
+    } catch(e) {
+      dom('aiRelList').innerHTML = '<div style="padding:20px; text-align:center; color:red">Unable to generate relationships right now.</div>';
+    } finally {
+      dom('aiRelLoader').style.display = 'none';
+    }
+  }
+
+  function filterAIRelationships(category) {
+    currentAIFilter = category;
+    document.querySelectorAll('.ai-filter-chip').forEach(btn => {
+      if (btn.innerText.includes(category) || (category === 'ALL' && btn.innerText.includes('All'))) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    if (currentAIRelData) {
+      renderAIRelationships(currentAIRelData, category);
+    }
+  }
+
+  function getStrengthBadge(score) {
+    if (score >= 90) return `<span class="strength-badge strength-very-strong">🟢 ${score}% • Very Strong</span>`;
+    if (score >= 75) return `<span class="strength-badge strength-strong">🔵 ${score}% • Strong</span>`;
+    if (score >= 60) return `<span class="strength-badge strength-moderate">🟡 ${score}% • Moderate</span>`;
+    return `<span class="strength-badge strength-possible">⚪ ${score}% • Possible</span>`;
+  }
+
+  function renderAIRelationships(data, filterCategory) {
+    dom('aiMeaningText').innerText = data.analysis.mainMeaning;
+
+    const refKey = data.reference;
+    const customRels = state.userRelationships[refKey] || [];
+    const formattedCustom = customRels.map(r => ({ ...r, isCustom: true }));
+    
+    const mergedList = [...formattedCustom, ...data.relationships];
+
+    let filteredRels = mergedList;
+    if (filterCategory !== 'ALL') {
+      filteredRels = mergedList.filter(r => r.type.toLowerCase().includes(filterCategory.toLowerCase()));
+    }
+
+    if (filteredRels.length === 0) {
+      dom('aiRelList').innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted)">No connections found under "${filterCategory}". Try selecting "All Connections".</div>`;
+    } else {
+      let html = '';
+      filteredRels.forEach(rel => {
+        const escapedExp = rel.explanation.replace(/[\r\n]/g, ' ').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const isCustom = !!rel.isCustom;
+        
+        let customActions = '';
+        if (isCustom) {
+          customActions = `
+            <div style="display:flex; gap:10px;">
+              <span onclick="event.stopPropagation(); editCustomRel('${refKey}', '${rel.id}')" style="cursor:pointer; font-size:1rem;" title="Edit Connection">✏️</span>
+              <span onclick="event.stopPropagation(); deleteCustomRel('${refKey}', '${rel.id}')" style="cursor:pointer; font-size:1rem; color:#ef4444;" title="Delete Connection">🗑️</span>
+            </div>
+          `;
+        }
+
+        html += `
+          <div class="ai-rel-card" style="${isCustom ? 'border-left: 4px solid var(--case-border); background: var(--case-bg);' : ''}">
+            <div class="ai-rel-top">
+              <span class="ai-rel-ref" onclick="previewPassage('${rel.reference}', '${rel.type}', '${escapedExp}')">📖 ${rel.reference}</span>
+              <div style="display:flex; align-items:center; gap:12px">
+                ${getStrengthBadge(rel.score)}
+                ${customActions}
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; margin-top:4px">
+              <span class="ai-rel-type-pill">${rel.type}</span>
+              <span style="font-size:0.72rem; color:var(--text-muted)">• ${isCustom ? 'My Custom Connection' : 'AI Suggested Relationship'}</span>
+            </div>
+            <div class="ai-rel-explanation">"${rel.explanation}"</div>
+            <button onclick="previewPassage('${rel.reference}', '${rel.type}', '${escapedExp}')" style="font-size:0.75rem; padding:6px 12px; background:var(--ai-bg); border:1px solid var(--ai-border); color:var(--text); font-weight:bold; border-radius:6px; margin-top:4px; cursor:pointer">
+              📖 Read Passage ➡
+            </button>
+          </div>
+        `;
+      });
+      dom('aiRelList').innerHTML = html;
+    }
+
+    let exploreHtml = '';
+    data.analysis.themes.forEach(t => { exploreHtml += `<span class="explore-tag">🏷️ ${t}</span>`; });
+    if (data.analysis.teachings) {
+      data.analysis.teachings.forEach(t => { exploreHtml += `<span class="explore-tag">💡 ${t}</span>`; });
+    }
+    if (data.analysis.applications) {
+      data.analysis.applications.forEach(a => { exploreHtml += `<span class="explore-tag">🌱 ${a}</span>`; });
+    }
+    dom('exploreTags').innerHTML = exploreHtml;
+  }
+
+  function openAddCustomRel() {
+    activeSourceRef = dom('aiRelModalRef').innerText;
+    editingCustomRelId = null;
+    dom('customRelModalTitle').innerText = "Add Connection";
+    dom('customRelSourceRef').innerText = activeSourceRef;
+    dom('customRelTargetRef').value = "";
+    dom('customRelType').value = "Same Theme";
+    dom('customRelScore').value = "90";
+    dom('scoreVal').innerText = "90%";
+    dom('customRelExplanation').value = "";
+    dom('customRelModal').classList.add('open');
+  }
+
+  function editCustomRel(sourceRef, relId) {
+    activeSourceRef = sourceRef;
+    editingCustomRelId = relId;
+    const list = state.userRelationships[sourceRef] || [];
+    const rel = list.find(r => r.id === relId);
+    if (!rel) return;
+
+    dom('customRelModalTitle').innerText = "Edit Connection";
+    dom('customRelSourceRef').innerText = sourceRef;
+    dom('customRelTargetRef').value = rel.reference;
+    dom('customRelType').value = rel.type;
+    dom('customRelScore').value = rel.score;
+    dom('scoreVal').innerText = rel.score + "%";
+    dom('customRelExplanation').value = rel.explanation;
+    dom('customRelModal').classList.add('open');
+  }
+
+  function deleteCustomRel(sourceRef, relId) {
+    if (confirm("Are you sure you want to delete this custom connection?")) {
+      if (state.userRelationships[sourceRef]) {
+        state.userRelationships[sourceRef] = state.userRelationships[sourceRef].filter(r => r.id !== relId);
+        if (state.userRelationships[sourceRef].length === 0) {
+          delete state.userRelationships[sourceRef];
+        }
+        localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
+        pushToCloud();
+        toast("Connection Deleted");
+        if (currentAIRelData) {
+          renderAIRelationships(currentAIRelData, currentAIFilter);
+        }
+      }
+    }
+  }
+
+  function saveCustomRel() {
+    const target = dom('customRelTargetRef').value.trim();
+    const type = dom('customRelType').value;
+    const score = parseInt(dom('customRelScore').value);
+    const explanation = dom('customRelExplanation').value.trim();
+
+    if (!target) {
+      alert("Please enter a target scripture reference.");
+      return;
+    }
+
+    if (!state.userRelationships[activeSourceRef]) {
+      state.userRelationships[activeSourceRef] = [];
+    }
+
+    if (editingCustomRelId) {
+      const idx = state.userRelationships[activeSourceRef].findIndex(r => r.id === editingCustomRelId);
+      if (idx !== -1) {
+        state.userRelationships[activeSourceRef][idx] = {
+          id: editingCustomRelId,
+          reference: target,
+          type,
+          score,
+          explanation
+        };
+      }
+    } else {
+      const newRel = {
+        id: Date.now().toString(),
+        reference: target,
+        type,
+        score,
+        explanation
+      };
+      state.userRelationships[activeSourceRef].push(newRel);
+    }
+
+    localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
+    pushToCloud();
+    toast("Connection Saved!");
+    dom('customRelModal').classList.remove('open');
+    if (currentAIRelData) {
+      renderAIRelationships(currentAIRelData, currentAIFilter);
+    }
+  }
+
+  async function previewPassage(refStr, relType, explanation) {
+    dom('previewRef').innerText = refStr;
+    dom('previewVerTag').innerText = `Translation: ${state.version} • ${relType || 'Related Scripture'}`;
+    dom('previewText').innerText = "Fetching scripture text...";
+    dom('previewExpText').innerText = explanation || "Related passage";
+    dom('previewLoader').style.display = 'block';
+    dom('passagePreviewModal').classList.add('open');
+
+    const match = refStr.match(/^(.+?)\s+(\d+):(\d+)(?:-(\d+))?$/);
+    if (!match) {
+      dom('previewText').innerText = `Reference: ${refStr}`;
+      dom('previewLoader').style.display = 'none';
+      return;
+    }
+
+    const [, bName, c, v] = match;
+    let bNameClean = bName.trim().toLowerCase();
+    if (bNameClean === 'psalm') bNameClean = 'psalms';
+
+    const bIdx = bibleData.findIndex(x => x.n.toLowerCase() === bNameClean || x.n.toLowerCase().replace(/s$/, '') === bNameClean.replace(/s$/, '')) + 1;
+
+    if (bIdx > 0) {
+      try {
+        let res = await fetch(`https://bolls.life/get-verse/${state.version}/${bIdx}/${c}/${v}/`);
+        if (!res.ok) {
+          res = await fetch(`https://bolls.life/get-text/${state.version}/${bIdx}/${c}/`);
+          if (res.ok) {
+            const chData = await res.json();
+            const verseMatch = chData.find(x => x.verse == v);
+            if (verseMatch) {
+              dom('previewText').innerHTML = `"${wrapWords(verseMatch.text)}"`;
+              return;
+            }
+          }
+          throw new Error("Fetch failed");
+        }
+        const vData = await res.json();
+        dom('previewText').innerHTML = `"${wrapWords(vData.text)}"`;
+      } catch (e) {
+        dom('previewText').innerText = `"${refStr}" (Unable to load full text offline).`;
+      } finally {
+        dom('previewLoader').style.display = 'none';
+      }
+
+      dom('previewJumpBtn').onclick = () => {
+        dom('passagePreviewModal').classList.remove('open');
+        dom('aiRelModal').classList.remove('open');
+        jumpTo(bIdx, c, v);
+      };
+    } else {
+      dom('previewText').innerText = `Reference: ${refStr}`;
+      dom('previewLoader').style.display = 'none';
+    }
+  }
+
+  function jumpToRefString(refStr) {
+    dom('aiRelModal').classList.remove('open');
+    const match = refStr.match(/^(.+?)\s+(\d+):(\d+)$/);
+    if (match) {
+      const [, bName, c, v] = match;
+      const bIdx = bibleData.findIndex(x => x.n.toLowerCase() === bName.trim().toLowerCase()) + 1;
+      if (bIdx > 0) jumpTo(bIdx, c, v);
+    }
+  }
+
   function findActiveCase(bookName, chapter, verse) {
     for (let key in curatedCases) {
       if (curatedCases[key].refs.some(r => r[0] == bookName && r[1] == chapter && r[2] == verse)) {
@@ -413,7 +2390,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     return null;
   }
 
-  window.openSmartCase = async (bookName, chapter, verse, text) => {
+  async function openSmartCase(bookName, chapter, verse, text) {
       dom('caseModal').classList.add('open');
       dom('caseVerses').innerHTML = '';
       dom('caseLoader').style.display = 'block';
@@ -430,14 +2407,8 @@ input.title-input:focus { border-bottom-color: var(--primary); }
           if(active.type === 'curated') {
              renderCaseList(active.refs.map(r => ({ book: r[0], chapter: r[1], verse: r[2], text: "Loading..." })), true);
           } else {
-             const parsed = active.refs.map(r => {
-                 const [b, rest] = r.split(/ (\d+):/);
-                 return { refString: r, text: "Stored in My Cases" };
-             });
              let html = '';
-             active.refs.forEach(r => {
-                 html += `<div class="parallel-item">${r}</div>`;
-             });
+             active.refs.forEach(r => { html += `<div class="parallel-item">${r}</div>`; });
              dom('caseVerses').innerHTML = html;
           }
           return;
@@ -449,7 +2420,10 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       const keywords = extractKeywords(text);
       
       try {
-          const res = await fetch(`https://bolls.life/search/NKJV/?search=${encodeURIComponent(keywords)}`);
+          let res = await fetch(`https://bolls.life/search/NKJV/?search=${encodeURIComponent(keywords)}`);
+          if (!res.ok) {
+              res = await fetch(`https://bolls.life/search/KJV/?search=${encodeURIComponent(keywords)}`);
+          }
           if(!res.ok) throw new Error("API Fail");
           const data = await res.json();
           const filtered = data.filter(d => !(d.book == state.book && d.chapter == chapter && d.verse == verse)).slice(0, 15);
@@ -462,7 +2436,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
           }
       } catch(e) { dom('caseDesc').innerText = "Offline."; } 
       finally { dom('caseLoader').style.display = 'none'; }
-  };
+  }
 
   function extractKeywords(text) {
      const clean = text.toLowerCase().replace(/[^\w\s]/g, '');
@@ -475,23 +2449,21 @@ input.title-input:focus { border-bottom-color: var(--primary); }
          const content = item.text || "Tap to read...";
          html += `<div class="parallel-item" onclick="jumpToCase('${item.book}','${item.chapter}','${item.verse}')">
             <span class="parallel-ref">${item.book} ${item.chapter}:${item.verse} ${isCurated ? '★' : ''}</span>
-            ${content}
+            ${wrapWords(content)}
          </div>`;
      });
      dom('caseVerses').innerHTML = html;
   }
 
-  window.jumpToCase = (bName, c, v) => {
+  function jumpToCase(bName, c, v) {
       const bIdx = bibleData.findIndex(x => x.n === bName) + 1;
       if(bIdx > 0) {
           dom('caseModal').classList.remove('open');
-          window.jumpTo(bIdx, c, v);
+          jumpTo(bIdx, c, v);
       }
-  };
+  }
 
-  /* ------------------- CUSTOM CASE BUILDER ------------------- */
-  
-  window.openCaseBuilder = (existingId = null) => {
+  function openCaseBuilder(existingId = null) {
       editingCaseId = existingId;
       dom('builderModal').classList.add('open');
       
@@ -506,26 +2478,26 @@ input.title-input:focus { border-bottom-color: var(--primary); }
           tempCaseRefs = [];
       }
       renderBuilderRefs();
-  };
+  }
 
-  window.startCustomCaseFromModal = (initialRef) => {
+  function startCustomCaseFromModal(initialRef) {
       dom('caseModal').classList.remove('open');
       editingCaseId = null;
       dom('builderModal').classList.add('open');
       dom('builderTitle').value = "";
-      dom('builderDesc').value = "Study started from " + initialRef;
-      tempCaseRefs = [initialRef];
+      dom('builderDesc').value = initialRef ? "Study started from " + initialRef : "";
+      tempCaseRefs = initialRef ? [initialRef] : [];
       renderBuilderRefs();
-  };
+  }
 
-  window.addRefToBuilder = () => {
+  function addRefToBuilder() {
       const val = dom('builderAddRef').value.trim();
       if(val) {
           tempCaseRefs.push(val);
           dom('builderAddRef').value = '';
           renderBuilderRefs();
       }
-  };
+  }
 
   function renderBuilderRefs() {
       dom('builderVerses').innerHTML = tempCaseRefs.map((r, i) => 
@@ -535,12 +2507,12 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       ).join('');
   }
 
-  window.removeBuilderRef = (i) => {
+  function removeBuilderRef(i) {
       tempCaseRefs.splice(i, 1);
       renderBuilderRefs();
-  };
+  }
 
-  window.saveCustomCase = () => {
+  function saveCustomCase() {
       const title = dom('builderTitle').value.trim();
       const desc = dom('builderDesc').value.trim();
       if(!title || tempCaseRefs.length === 0) return alert("Title and verses required");
@@ -552,13 +2524,14 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       pushToCloud();
       
       dom('builderModal').classList.remove('open');
-      window.toast("Case Saved!");
+      toast("Case Saved!");
       if(dom('view-mycases').classList.contains('active')) renderMyCases();
       renderBible(currentScriptureData); 
-  };
+  }
 
-  window.renderMyCases = () => {
+  function renderMyCases() {
       const list = dom('myCasesList');
+      if (!list) return;
       const keys = Object.keys(state.userCases);
       if(keys.length === 0) {
           list.innerHTML = "<div style='padding:20px; text-align:center; color:gray'>No custom cases yet.</div>";
@@ -578,9 +2551,9 @@ input.title-input:focus { border-bottom-color: var(--primary); }
               <div style="font-size:0.85rem; color:gray">${c.refs.length} scriptures linked</div>
           </div>`;
       }).join('');
-  };
+  }
 
-  window.deleteCase = (id) => {
+  function deleteCase(id) {
       if(confirm("Delete this case study?")) {
           delete state.userCases[id];
           localStorage.setItem('userCases', JSON.stringify(state.userCases));
@@ -588,129 +2561,314 @@ input.title-input:focus { border-bottom-color: var(--primary); }
           renderMyCases();
           renderBible(currentScriptureData);
       }
-  };
-
-  /* ------------------- CORE APP LOGIC ------------------- */
+  }
 
   function initCloud() {
-      if(state.currentID) {
+      if (!state.currentID) {
+          state.currentID = GLOBAL_PUBLIC_CHANNEL;
+      }
+      
+      if (state.currentID === GLOBAL_PUBLIC_CHANNEL) {
           dom('loginUI').style.display = 'none';
           dom('syncUI').style.display = 'block';
-          dom('displayID').innerText = state.currentID;
-          startListener(state.currentID);
+          dom('displayID').innerText = "Global Public Sync";
+      } else {
+          dom('loginUI').style.display = 'none';
+          dom('syncUI').style.display = 'block';
+          dom('displayID').innerText = `Channel: ${state.currentID}`;
       }
+
+      startListener(state.currentID);
   }
 
   function startListener(id) {
-      dom('statusLog').innerText = "Connecting...";
+      dom('statusLog').innerHTML = `<span style="color:#eab308">⏳ Connecting to ${id === GLOBAL_PUBLIC_CHANNEL ? 'Global Sync' : id}...</span>`;
+      if (unsubscribe) unsubscribe();
+
+      let isInitialLoad = true;
+
       unsubscribe = onSnapshot(doc(db, "users", id), (docSnap) => {
           if (docSnap.exists()) {
               const data = docSnap.data();
-              state.highlights = data.highlights || {};
-              state.verseNotes = data.notes || {};
-              state.versePrayers = data.prayers || {};
-              state.userCases = data.cases || {}; 
+              
+              if (isInitialLoad) {
+                  state.highlights = { ...(data.highlights || {}), ...state.highlights };
+                  state.verseNotes = { ...(data.notes || {}), ...state.verseNotes };
+                  state.versePrayers = { ...(data.prayers || {}), ...state.versePrayers };
+                  state.userCases = { ...(data.cases || {}), ...state.userCases };
+                  state.userRelationships = { ...(data.userRelationships || {}), ...state.userRelationships };
+                  isInitialLoad = false;
+                  pushToCloud();
+              } else {
+                  state.highlights = data.highlights || {};
+                  state.verseNotes = data.notes || {};
+                  state.versePrayers = data.prayers || {};
+                  state.userCases = data.cases || {}; 
+                  state.userRelationships = data.userRelationships || {};
+              }
               
               localStorage.setItem('highlights', JSON.stringify(state.highlights));
               localStorage.setItem('verseNotes', JSON.stringify(state.verseNotes));
               localStorage.setItem('versePrayers', JSON.stringify(state.versePrayers));
               localStorage.setItem('userCases', JSON.stringify(state.userCases));
+              localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
 
-              dom('statusLog').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
-              if(dom('view-read').classList.contains('active') && currentScriptureData) renderBible(currentScriptureData); 
-              if(dom('view-mycases').classList.contains('active')) renderMyCases();
+              dom('statusLog').innerHTML = `<span style="color:#16a34a; font-weight:bold">🟢 Live Public Sync Active (${new Date().toLocaleTimeString()})</span>`;
+              
+              if (currentScriptureData) renderBible(currentScriptureData); 
+              if (dom('view-mycases') && dom('view-mycases').classList.contains('active')) renderMyCases();
+              if (dom('view-prayer') && dom('view-prayer').classList.contains('active')) renderPrayerList();
+          } else {
+              isInitialLoad = false;
+              pushToCloud();
           }
-      }, (e) => dom('statusLog').innerText = "Sync Error");
+      }, (e) => {
+          console.error("Firestore sync error:", e);
+          let errMsg = e.message || "Connection failed";
+          if (e.code === 'permission-denied') {
+              errMsg = "Firebase Rules Error! Set Firestore Rules to 'allow read, write: if true;' in Firebase Console.";
+          }
+          dom('statusLog').innerHTML = `<span style="color:#ef4444; font-weight:bold">🔴 Sync Error: ${errMsg}</span>`;
+      });
   }
 
   async function pushToCloud() {
-      if(!state.currentID) return;
+      if (!state.currentID) state.currentID = GLOBAL_PUBLIC_CHANNEL;
       try {
           await setDoc(doc(db, "users", state.currentID), {
-              highlights: state.highlights, notes: state.verseNotes, prayers: state.versePrayers, cases: state.userCases, lastUpdate: new Date().toISOString()
+              highlights: state.highlights || {}, 
+              notes: state.verseNotes || {}, 
+              prayers: state.versePrayers || {}, 
+              cases: state.userCases || {}, 
+              userRelationships: state.userRelationships || {},
+              lastUpdate: new Date().toISOString()
           }, { merge: true });
-          dom('statusLog').innerText = "Sent ✔";
-      } catch(e) { console.error(e); }
+          dom('statusLog').innerHTML = `<span style="color:#16a34a; font-weight:bold">🟢 Public Sync Updated (${new Date().toLocaleTimeString()})</span>`;
+          
+          if (syncChannel) {
+              syncChannel.postMessage({ type: 'SYNC_UPDATE', state });
+          }
+      } catch(e) { 
+          console.error("Cloud push failed:", e); 
+          let errMsg = e.message || "Push failed";
+          dom('statusLog').innerHTML = `<span style="color:#ef4444; font-weight:bold">🔴 Sync Error: ${errMsg}</span>`;
+      }
   }
 
-  window.init = function() {
+  function showPrivateLogin() {
+      dom('syncUI').style.display = 'none';
+      dom('loginUI').style.display = 'block';
+  }
+
+  function switchToGlobalSync() {
+      state.currentID = GLOBAL_PUBLIC_CHANNEL;
+      localStorage.removeItem('cloudID');
+      initCloud();
+  }
+
+  function connectCloud() {
+      const id = dom('cloudID').value.trim();
+      if (!id) {
+          switchToGlobalSync();
+          return;
+      }
+      state.currentID = id;
+      localStorage.setItem('cloudID', id);
+      initCloud();
+  }
+
+  function init() {
     const bSelect = dom('bookSelect');
-    bibleData.forEach((b, i) => bSelect.add(new Option(b.n, i + 1)));
+    if (bSelect) {
+      bSelect.innerHTML = "";
+      bibleData.forEach((b, i) => bSelect.add(new Option(b.n, i + 1)));
+    }
     
-    const lastPos = JSON.parse(localStorage.getItem('lastPos'));
-    if(lastPos) { 
-        bSelect.value = lastPos.b; 
+    const lastPos = safeJSONParse('lastPos', null);
+    if (lastPos) { 
+        if (bSelect) bSelect.value = lastPos.b || 1; 
         state.version = lastPos.v || 'NKJV'; 
-        dom('verSelect').value = state.version;
+        if (dom('verSelect')) dom('verSelect').value = state.version;
         updateChapters(true); 
-        dom('chapSelect').value = lastPos.c; 
-    } else { updateChapters(true); }
+        if (dom('chapSelect')) dom('chapSelect').value = lastPos.c || 1; 
+    } else { 
+        updateChapters(true); 
+    }
     
-    if(state.serifMode) document.body.classList.add('serif-mode');
+    if (state.serifMode) document.body.classList.add('serif-mode');
 
-    window.loadBible();
+    if (dom('studyUserName')) dom('studyUserName').value = state.userName;
+    if (dom('currentUserLabel')) dom('currentUserLabel').innerText = state.userName;
+
+    if (dom('searchInput')) {
+      dom('searchInput').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') performSearch();
+      });
+    }
+    if (dom('cloudID')) {
+      dom('cloudID').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') connectCloud();
+      });
+    }
+    if (dom('dictManualInput')) {
+      dom('dictManualInput').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') lookupWord(dom('dictManualInput').value);
+      });
+    }
+
+    loadBible();
     initCloud();
-    window.loadDaily();
-  };
+    loadDaily();
+  }
 
-  /* ... Standard Functions ... */
+  function updateChapters(skipLoad) {
+      const bSelect = dom('bookSelect');
+      if (!bSelect) return;
+      const bIdx = parseInt(bSelect.value) - 1;
+      const count = (bibleData[bIdx] && bibleData[bIdx].c) ? bibleData[bIdx].c : 50;
+      const chapSelect = dom('chapSelect');
+      if (!chapSelect) return;
+      chapSelect.innerHTML = "";
+      for (let i = 1; i <= count; i++) chapSelect.add(new Option(i, i));
+      if (!skipLoad) { state.chapter = 1; loadBible(); }
+  }
 
-  window.updateChapters = (skipLoad) => {
-      const bIdx = dom('bookSelect').value - 1;
-      const count = bibleData[bIdx].c;
-      dom('chapSelect').innerHTML = "";
-      for(let i=1; i<=count; i++) dom('chapSelect').add(new Option(i, i));
-      if(!skipLoad) { state.chapter = 1; window.loadBible(); }
-  };
+  function prevChap() { 
+      const cs = dom('chapSelect');
+      if (cs && state.chapter > 1) { 
+        state.chapter--;
+        cs.value = state.chapter; 
+        loadBible(); 
+      } else if (state.book > 1) {
+        state.book--;
+        dom('bookSelect').value = state.book;
+        updateChapters(true);
+        state.chapter = bibleData[state.book - 1].c;
+        if (cs) cs.value = state.chapter;
+        loadBible();
+      }
+  }
 
-  window.prevChap = () => { if(state.chapter>1) { dom('chapSelect').value--; window.loadBible(); }};
-  window.nextChap = () => { dom('chapSelect').value++; window.loadBible(); };
+  function nextChap() { 
+      const cs = dom('chapSelect');
+      const maxChaps = (bibleData[state.book - 1] && bibleData[state.book - 1].c) ? bibleData[state.book - 1].c : 50;
+      if (cs && state.chapter < maxChaps) { 
+        state.chapter++;
+        cs.value = state.chapter; 
+        loadBible(); 
+      } else if (state.book < bibleData.length) {
+        state.book++;
+        dom('bookSelect').value = state.book;
+        updateChapters(true);
+        state.chapter = 1;
+        if (cs) cs.value = 1;
+        loadBible();
+      }
+  }
 
-  window.loadBible = async () => {
-      state.book = dom('bookSelect').value; state.chapter = dom('chapSelect').value; state.version = dom('verSelect').value;
-      localStorage.setItem('lastPos', JSON.stringify({b:state.book, c:state.chapter, v:state.version}));
-      dom('bible-content').innerHTML = '<div style="text-align:center;padding:50px">Loading...</div>';
-      
+  async function loadBible() {
+      const bSel = dom('bookSelect');
+      const cSel = dom('chapSelect');
+      const vSel = dom('verSelect');
+
+      state.book = (bSel && bSel.value) ? parseInt(bSel.value) : 1;
+      state.chapter = (cSel && cSel.value) ? parseInt(cSel.value) : 1;
+      state.version = (vSel && vSel.value) ? vSel.value : 'NKJV';
+
+      if (isNaN(state.book) || state.book < 1) state.book = 1;
+      if (isNaN(state.chapter) || state.chapter < 1) state.chapter = 1;
+
+      localStorage.setItem('lastPos', JSON.stringify({b: state.book, c: state.chapter, v: state.version}));
+
+      if (dom('bible-content')) {
+        dom('bible-content').innerHTML = '<div style="text-align:center;padding:50px;color:var(--text-muted)">⏳ Loading Scripture...</div>';
+      }
+
       try {
-          const res = await fetch(`https://bolls.life/get-chapter/${state.version}/${state.book}/${state.chapter}/`);
-          if(!res.ok) throw new Error("Ver not found");
-          const data = await res.json();
-          currentScriptureData = data; 
-          
-          dom('verseSelect').innerHTML = '<option>Vs</option>';
-          data.forEach(v => dom('verseSelect').add(new Option(v.verse, v.verse)));
+          let data = null;
+          let versionsToTry = [state.version, 'NKJV', 'KJV', 'WEB', 'BBE'];
+          versionsToTry = [...new Set(versionsToTry)];
+
+          for (let ver of versionsToTry) {
+              try {
+                  let res = await fetch(`https://bolls.life/get-chapter/${ver}/${state.book}/${state.chapter}/`);
+                  if (!res.ok) {
+                      res = await fetch(`https://bolls.life/get-text/${ver}/${state.book}/${state.chapter}/`);
+                  }
+                  if (res.ok) {
+                      let jsonData = await res.json();
+                      if (Array.isArray(jsonData) && jsonData.length > 0) {
+                          data = jsonData;
+                          if (ver !== state.version) {
+                              state.version = ver;
+                              if (vSel) vSel.value = ver;
+                              toast(`Switched to ${ver} translation`);
+                          }
+                          break;
+                      }
+                  }
+              } catch(fetchErr) {
+                  console.warn(`Failed to fetch ${ver}`, fetchErr);
+              }
+          }
+
+          if (!data || !Array.isArray(data) || data.length === 0) {
+              throw new Error("Unable to fetch Bible chapter data.");
+          }
+
+          currentScriptureData = data;
+
+          if (dom('verseSelect')) {
+              dom('verseSelect').innerHTML = '<option value="Vs">Vs</option>';
+              data.forEach(v => {
+                  if (v && v.verse) {
+                      dom('verseSelect').add(new Option(v.verse, v.verse));
+                  }
+              });
+          }
 
           renderBible(data);
-      } catch(e) { 
-          dom('bible-content').innerHTML = `<div style="text-align:center;padding:20px;color:red">
-            <b>${state.version} Unavailable</b><br>Try KJV, NKJV, or WEB.</div>`; 
+      } catch(e) {
+          console.error("loadBible Error:", e);
+          if (dom('bible-content')) {
+              dom('bible-content').innerHTML = `
+                  <div style="text-align:center;padding:30px;color:red">
+                      <b>⚠️ Network Error Loading Scripture</b><br>
+                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px">Please check your internet connection or try refreshing.</p>
+                      <button onclick="loadBible()" class="primary-btn" style="width:auto; margin-top:10px">🔄 Retry Loading</button>
+                  </div>`;
+          }
       }
-  };
+  }
 
-  window.scrollToVerse = () => {
-      const v = dom('verseSelect').value;
+  function scrollToVerse() {
+      const v = dom('verseSelect') ? dom('verseSelect').value : null;
+      if (!v || v === 'Vs') return;
       const el = dom('v'+v);
       if(el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.background = 'var(--note-bg)'; setTimeout(()=>el.style.background='', 1000); }
-  };
+  }
 
   function parseNoteData(rawData) {
-      if (!rawData) return { title: "", body: "" };
-      try { const parsed = JSON.parse(rawData); return { title: parsed.t || "", body: parsed.b || "" }; } catch (e) { }
-      return { title: "", body: rawData };
+      if (!rawData) return { title: "", body: "", pwd: "" };
+      try { 
+        const parsed = JSON.parse(rawData); 
+        return { title: parsed.t || "", body: parsed.b || "", pwd: parsed.pwd || "" }; 
+      } catch (e) { }
+      return { title: "", body: rawData, pwd: "" };
   }
 
   function renderBible(data) {
-      if(!data) return;
-      const bookName = bibleData[state.book-1].n;
+      if (!data || !Array.isArray(data) || !dom('bible-content')) return;
+      const bookName = (bibleData[state.book - 1] && bibleData[state.book - 1].n) ? bibleData[state.book - 1].n : "Book";
       let html = '';
       
       data.forEach((v) => {
+          if (!v || !v.verse) return;
           const vid = `${state.book}-${state.chapter}-${v.verse}`;
           const hl = state.highlights[vid] ? `hl-${state.highlights[vid]}` : '';
           const nt = state.verseNotes[vid]; 
           const pt = state.versePrayers[vid];
 
-          // Check for Active Case
           const active = findActiveCase(bookName, parseInt(state.chapter), v.verse);
           let caseStyle = '';
           let caseTag = '';
@@ -726,105 +2884,156 @@ input.title-input:focus { border-bottom-color: var(--primary); }
           
           let noteHtml = '';
           if (nt) {
-              const { title, body } = parseNoteData(nt);
+              const { title, body, pwd } = parseNoteData(nt);
               const titleHtml = title ? `<span class="note-title">${title}</span>` : '';
-              // Now that we support HTML, we simply render the body directly
-              noteHtml = `<div class="user-block user-note" onclick="event.stopPropagation(); openEditor('${vid}','note')">${titleHtml}📝 ${body}</div>`;
+              const lockBadge = pwd ? '🔒 Protected' : '✏️ Edit';
+
+              noteHtml = `<div class="user-block user-note" onclick="event.stopPropagation(); openEditor('${vid}','note')">
+                  <div style="display:flex; justify-content:space-between; width:100%; align-items:flex-start;">
+                    <div>${titleHtml}📝 ${body}</div>
+                    <span style="font-size:0.75rem; opacity:0.8; margin-left:8px; white-space:nowrap; font-weight:bold">${lockBadge}</span>
+                  </div>
+              </div>`;
           }
 
           let prayerHtml = '';
           if (pt) {
-             const { title, body } = parseNoteData(pt);
-             prayerHtml = `<div class="user-block user-prayer" onclick="event.stopPropagation(); openEditor('${vid}','prayer')">🙏 ${body}</div>`;
+             const { title, body, pwd } = parseNoteData(pt);
+             const lockBadge = pwd ? '🔒 Protected' : '✏️ Edit';
+
+             prayerHtml = `<div class="user-block user-prayer" onclick="event.stopPropagation(); openEditor('${vid}','prayer')">
+                 <div style="display:flex; justify-content:space-between; width:100%; align-items:flex-start;">
+                   <div>🙏 ${body}</div>
+                   <span style="font-size:0.75rem; opacity:0.8; margin-left:8px; white-space:nowrap; font-weight:bold">${lockBadge}</span>
+                 </div>
+             </div>`;
           }
           
+          const cleanTextEscaped = (v.text || '').replace(/<[^>]*>/g, '').replace(/[\r\n]/g, ' ').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const wordWrappedText = wrapWords(v.text || '');
+
           html += `<div class="verse-card ${hl} ${caseStyle}" id="v${v.verse}">
               <div class="v-header">
-                  <span style="color:var(--primary); display:flex; align-items:center; gap:8px">
+                  <span style="color:var(--primary); display:flex; align-items:center; gap:6px">
                       ${v.verse} 
-                      <span class="case-btn" onclick="event.stopPropagation(); openSmartCase('${bookName}', '${state.chapter}', '${v.verse}', '${v.text.replace(/'/g, "")}')">
+                      <span class="ai-rel-btn" onclick="event.stopPropagation(); openAIRelationships('${bookName}', '${state.chapter}', '${v.verse}', '${cleanTextEscaped}')">
+                        🔗 Related
+                      </span>
+                      <span class="case-btn" onclick="event.stopPropagation(); openSmartCase('${bookName}', '${state.chapter}', '${v.verse}', '${cleanTextEscaped}')">
                         💼 Study
                       </span>
                   </span>
                   <div class="action-icons">
-                    <span onclick="event.stopPropagation(); openCompare('${v.verse}')">⚖️</span>
-                    <span onclick="event.stopPropagation(); openEditor('${vid}','note')">📝</span>
-                    <span onclick="event.stopPropagation(); openEditor('${vid}','prayer')">🙏</span>
-                    <span onclick="event.stopPropagation(); toggleHighlight('${vid}','yellow')">🟡</span>
+                    <span onclick="event.stopPropagation(); openCompare('${v.verse}')" title="Compare Versions">⚖️</span>
+                    <span onclick="event.stopPropagation(); openEditor('${vid}','note')" title="Add Note">📝</span>
+                    <span onclick="event.stopPropagation(); openEditor('${vid}','prayer')" title="Add Prayer">🙏</span>
+                    <span onclick="event.stopPropagation(); toggleHighlight('${vid}','yellow')" title="Highlight Verse">🟡</span>
                   </div>
               </div>
-              <div style="cursor:pointer" onclick="toggleHighlight('${vid}','yellow')">${v.text}</div>
+              <div style="cursor:pointer" onclick="toggleHighlight('${vid}','yellow')">${wordWrappedText}</div>
               ${caseTag} ${noteHtml} ${prayerHtml}
           </div>`;
       });
       dom('bible-content').innerHTML = html + '<div style="height:50px"></div>';
   }
 
-  window.openCompare = async (verseNum) => {
+  async function openCompare(verseNum) {
       dom('compareModal').classList.add('open');
-      dom('compareRef').innerText = `${bibleData[state.book-1].n} ${state.chapter}:${verseNum}`;
+      const bookName = bibleData[state.book-1] ? bibleData[state.book-1].n : '';
+      dom('compareRef').innerText = `${bookName} ${state.chapter}:${verseNum}`;
       dom('compareList').innerHTML = 'Loading versions...';
       const versToFetch = ['KJV', 'NKJV', 'WEB', 'BBE'];
       let html = '';
       for(let ver of versToFetch) {
           try {
-             const res = await fetch(`https://bolls.life/get-verse/${ver}/${state.book}/${state.chapter}/${verseNum}/`);
+             let res = await fetch(`https://bolls.life/get-verse/${ver}/${state.book}/${state.chapter}/${verseNum}/`);
+             if(!res.ok) {
+                 res = await fetch(`https://bolls.life/get-text/${ver}/${state.book}/${state.chapter}/`);
+                 if(res.ok) {
+                    const chData = await res.json();
+                    const match = chData.find(x => x.verse == verseNum);
+                    if(match) {
+                       html += `<div class="compare-row"><div class="compare-ver">${ver}</div>${wrapWords(match.text)}</div>`;
+                       continue;
+                    }
+                 }
+                 throw new Error("Unavailable");
+             }
              const data = await res.json();
-             html += `<div class="compare-row"><div class="compare-ver">${ver}</div>${data.text}</div>`;
+             html += `<div class="compare-row"><div class="compare-ver">${ver}</div>${wrapWords(data.text)}</div>`;
           } catch(e) { html += `<div class="compare-row"><div class="compare-ver">${ver}</div><small>Not available</small></div>`; }
       }
       dom('compareList').innerHTML = html;
-  };
+  }
 
-  window.performSearch = async () => {
+  async function performSearch() {
       const q = dom('searchInput').value.trim();
-      if(q.length < 3) return alert("Search too short");
+      if(q.length < 3) return alert("Search query must be at least 3 characters");
       dom('searchResults').innerHTML = '<div style="text-align:center;padding:20px">Searching...</div>';
       try {
-          const res = await fetch(`https://bolls.life/search/NKJV/?search=${encodeURIComponent(q)}`);
+          let res = await fetch(`https://bolls.life/search/${state.version}/?search=${encodeURIComponent(q)}`);
+          if (!res.ok && state.version === 'NKJV') {
+              res = await fetch(`https://bolls.life/search/KJV/?search=${encodeURIComponent(q)}`);
+          }
           const data = await res.json();
           if(!data.length) { dom('searchResults').innerHTML = '<div style="padding:20px">No results found.</div>'; return; }
           let html = '';
           data.slice(0, 50).forEach(item => {
-               const bName = bibleData[item.book-1].n;
+               const bookObj = bibleData[item.book-1];
+               if (!bookObj) return;
+               const bName = bookObj.n;
                html += `<div class="search-result" onclick="jumpTo('${item.book}','${item.chapter}','${item.verse}')">
-                   <b>${bName} ${item.chapter}:${item.verse}</b><br>${item.text}</div>`;
+                   <b>${bName} ${item.chapter}:${item.verse}</b><br>${wrapWords(item.text)}</div>`;
           });
           dom('searchResults').innerHTML = html;
       } catch(e) { dom('searchResults').innerHTML = 'Error searching.'; }
-  };
+  }
 
-  window.jumpTo = (b, c, v) => {
+  function jumpTo(b, c, v) {
       dom('bookSelect').value = b; updateChapters(true); dom('chapSelect').value = c;
-      nav('read'); window.loadBible().then(() => {
+      nav('read'); loadBible().then(() => {
           setTimeout(() => { 
              const el = dom('v'+v); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); 
-             window.toast(`Jumped to Verse ${v}`);
+             toast(`Jumped to Verse ${v}`);
           }, 500);
       });
-  };
+  }
 
-  window.openEditor = (id, type) => {
+  function openEditor(id, type) {
+      const rawData = (type==='note' ? state.verseNotes[id] : state.versePrayers[id]);
+      const { title, body, pwd } = parseNoteData(rawData);
+
+      if (pwd) {
+          const enteredPwd = prompt("🔑 Protected Note.\nEnter password to edit:");
+          if (enteredPwd === null) return;
+          if (enteredPwd !== pwd) {
+              toast("🔒 Incorrect Password! Edit access denied.");
+              return;
+          }
+      }
+
       activeEditor = { id, type }; const [b,c,v] = id.split('-');
       dom('modalTitle').innerText = type==='note'?'Edit Note':'Add Prayer';
-      dom('modalRef').innerText = `${bibleData[b-1].n} ${c}:${v}`;
-      const rawData = (type==='note' ? state.verseNotes[id] : state.versePrayers[id]);
-      const { title, body } = parseNoteData(rawData);
+      const bName = bibleData[b-1] ? bibleData[b-1].n : '';
+      dom('modalRef').innerText = `${bName} ${c}:${v}`;
       dom('modalTitleInput').value = title;
-      // Set InnerHTML instead of value for Rich Text
+      dom('modalPasswordInput').value = pwd || '';
       dom('modalInput').innerHTML = body; 
       dom('editorModal').classList.add('open'); 
-  };
+  }
 
-  window.saveFromModal = () => {
+  function saveFromModal() {
       const title = dom('modalTitleInput').value.trim();
-      // Get InnerHTML for Rich Text
+      const password = dom('modalPasswordInput').value.trim();
       const body = dom('modalInput').innerHTML; 
       const {id,type} = activeEditor;
-      
-      // Basic check if empty (stripping tags)
+      if (!id) return;
+
       const plainText = dom('modalInput').innerText.trim();
-      let dataToSave = (!title && !plainText && !body.includes('<img')) ? null : JSON.stringify({ t: title, b: body });
+      
+      let dataToSave = (!title && !plainText && !body.includes('<img')) 
+        ? null 
+        : JSON.stringify({ t: title, b: body, pwd: password });
       
       if(type==='note') { 
           if(dataToSave) state.verseNotes[id] = dataToSave; else delete state.verseNotes[id]; 
@@ -833,71 +3042,140 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       }
       localStorage.setItem('verseNotes', JSON.stringify(state.verseNotes));
       localStorage.setItem('versePrayers', JSON.stringify(state.versePrayers));
-      renderBible(currentScriptureData); pushToCloud();
-      dom('editorModal').classList.remove('open'); window.toast("Saved!");
-      if(dom('view-prayer').classList.contains('active')) renderPrayerList();
-  };
+      
+      renderBible(currentScriptureData); 
+      pushToCloud();
+      
+      dom('editorModal').classList.remove('open'); 
+      toast("Saved & Synchronized Globally!");
+      if(dom('view-prayer') && dom('view-prayer').classList.contains('active')) renderPrayerList();
+  }
 
-  window.closeModal = (id) => dom(id).classList.remove('open');
-  window.toggleHighlight = (id, c) => { 
+  function closeModal(id) {
+    if (dom(id)) dom(id).classList.remove('open');
+  }
+
+  function toggleHighlight(id, c) { 
       if(state.highlights[id]===c) delete state.highlights[id]; else state.highlights[id]=c; 
       localStorage.setItem('highlights',JSON.stringify(state.highlights)); 
       renderBible(currentScriptureData); pushToCloud();
-  };
+  }
 
-  window.nav = (id) => { 
+  function nav(id) { 
+      if (id !== 'studyroom') {
+          leavePresence(state.studyRoom);
+      }
       dom('sidebar').classList.remove('open'); document.querySelector('.overlay').classList.remove('active');
       document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active')); 
       dom('view-'+id).classList.add('active'); 
-      if(id==='prayer') window.renderPrayerList();
-      if(id==='mycases') window.renderMyCases();
-  };
+      if(id==='prayer') renderPrayerList();
+      if(id==='mycases') renderMyCases();
+      if(id==='studyroom') listenToStudyRoom();
+      if(id==='search') {
+         dom('searchSubLabel').innerText = `Searching ${state.version} Bible`;
+      }
+  }
 
-  window.toggleSidebar = () => { dom('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('active'); };
-  window.toggleTheme = () => document.body.classList.toggle('dark');
-  window.toggleFont = () => {
+  function toggleSidebar() { dom('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('active'); }
+  function toggleTheme() { document.body.classList.toggle('dark'); }
+  function toggleFont() {
       state.serifMode = !state.serifMode;
       if(state.serifMode) document.body.classList.add('serif-mode'); else document.body.classList.remove('serif-mode');
       localStorage.setItem('serifMode', state.serifMode);
-  };
+  }
 
-  window.renderPrayerList = () => { 
+  function renderPrayerList() { 
       const list = Object.entries(state.versePrayers).map(([id, raw])=>{ 
-          const [b,c,v]=id.split('-'); const { title, body } = parseNoteData(raw);
-          return { ref:`${bibleData[b-1].n} ${c}:${v}`, t: body, title: title, id }; 
+          const [b,c,v]=id.split('-'); const { title, body, pwd } = parseNoteData(raw);
+          const bName = bibleData[b-1] ? bibleData[b-1].n : '';
+          return { ref:`${bName} ${c}:${v}`, t: body, title: title, id, pwd }; 
       }); 
       dom('prayer-list').innerHTML = list.length ? list.map(p=> {
           const titleHtml = p.title ? `<div style="font-weight:bold;color:var(--primary);font-size:0.9rem">${p.title}</div>` : '';
-          return `<div class="verse-card"><div class="v-header">${p.ref} <span onclick="event.stopPropagation(); openEditor('${p.id}','prayer')" style="float:right;cursor:pointer">✏️</span></div>${titleHtml}<div style="font-style:italic">${p.t}</div></div>`
+          const lockBadge = p.pwd ? '🔒 Protected' : '✏️ Edit';
+          return `<div class="verse-card"><div class="v-header">${p.ref} <span onclick="event.stopPropagation(); openEditor('${p.id}','prayer')" style="float:right;cursor:pointer;font-weight:bold">${lockBadge}</span></div>${titleHtml}<div style="font-style:italic">${p.t}</div></div>`
       }).join('') : '<div style="text-align:center;padding:20px;color:gray">No prayers added.</div>'; 
-  };
+  }
 
-  window.loadDaily = async () => { 
+  async function loadDaily() { 
       const bIdx = Math.floor(Math.random()*66); const chap = Math.floor(Math.random()*bibleData[bIdx].c)+1;
       try {
-        const res = await fetch(`https://bolls.life/get-chapter/KJV/${bIdx+1}/${chap}/`);
+        const res = await fetch(`https://bolls.life/get-chapter/NKJV/${bIdx+1}/${chap}/`);
         const data = await res.json();
         const v = data[Math.floor(Math.random()*data.length)];
-        dom('daily-card').innerHTML = `<h3 style="color:var(--primary);margin-top:0">${bibleData[bIdx].n} ${chap}:${v.verse}</h3><p style="font-size:1.1rem">"${v.text}"</p><button onclick="jumpTo('${bIdx+1}','${chap}','${v.verse}')" class="primary-btn">Go to Chapter</button>`;
+        dom('daily-card').innerHTML = `<h3 style="color:var(--primary);margin-top:0">${bibleData[bIdx].n} ${chap}:${v.verse}</h3><p style="font-size:1.1rem">"${wrapWords(v.text)}"</p><button onclick="jumpTo('${bIdx+1}','${chap}','${v.verse}')" class="primary-btn">Go to Chapter</button>`;
       } catch(e) { dom('daily-card').innerHTML = "Daily Verse Offline"; }
-  };
+  }
 
-  window.toast = (m) => { const t = dom('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); };
+  function toast(m) { const t = dom('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
   
-  // Expose functions globally
-  window.openSmartCase = window.openSmartCase;
-  window.jumpToCase = window.jumpToCase;
-  window.openCaseBuilder = window.openCaseBuilder;
-  window.startCustomCaseFromModal = window.startCustomCaseFromModal;
-  window.addRefToBuilder = window.addRefToBuilder;
-  window.removeBuilderRef = window.removeBuilderRef;
-  window.saveCustomCase = window.saveCustomCase;
-  window.renderMyCases = window.renderMyCases;
-  window.deleteCase = window.deleteCase;
-  window.execCmd = window.execCmd;
+  window.lookupWord = lookupWord;
+  window.openAIRelationships = openAIRelationships;
+  window.filterAIRelationships = filterAIRelationships;
+  window.previewPassage = previewPassage;
+  window.jumpToRefString = jumpToRefString;
+  window.openSmartCase = openSmartCase;
+  window.jumpToCase = jumpToCase;
+  window.openCaseBuilder = openCaseBuilder;
+  window.startCustomCaseFromModal = startCustomCaseFromModal;
+  window.addRefToBuilder = addRefToBuilder;
+  window.removeBuilderRef = removeBuilderRef;
+  window.saveCustomCase = saveCustomCase;
+  window.renderMyCases = renderMyCases;
+  window.deleteCase = deleteCase;
+  window.execCmd = execCmd;
+  window.connectCloud = connectCloud;
+  window.showPrivateLogin = showPrivateLogin;
+  window.switchToGlobalSync = switchToGlobalSync;
+  window.openAddCustomRel = openAddCustomRel;
+  window.editCustomRel = editCustomRel;
+  window.deleteCustomRel = deleteCustomRel;
+  window.saveCustomRel = saveCustomRel;
+  window.toggleSidebar = toggleSidebar;
+  window.toggleTheme = toggleTheme;
+  window.toggleFont = toggleFont;
+  window.nav = nav;
+  window.loadBible = loadBible;
+  window.updateChapters = updateChapters;
+  window.prevChap = prevChap;
+  window.nextChap = nextChap;
+  window.scrollToVerse = scrollToVerse;
+  window.performSearch = performSearch;
+  window.openCompare = openCompare;
+  window.openEditor = openEditor;
+  window.saveFromModal = saveFromModal;
+  window.closeModal = closeModal;
+  window.toggleHighlight = toggleHighlight;
+  window.renderPrayerList = renderPrayerList;
+  window.loadDaily = loadDaily;
+  window.toast = toast;
+  window.jumpTo = jumpTo;
+  window.saveUserName = saveUserName;
+  window.switchStudyRoom = switchStudyRoom;
+  window.updateStudyRoomChapters = updateStudyRoomChapters;
+  window.attachFullScriptureToRoom = attachFullScriptureToRoom;
+  window.clearAttachedScripture = clearAttachedScripture;
+  window.sendStudyContribution = sendStudyContribution;
+  window.toggleEditTopicForm = toggleEditTopicForm;
+  window.saveRoomTopic = saveRoomTopic;
+  window.switchStudySubTab = switchStudySubTab;
+  window.askStudyQuestion = askStudyQuestion;
+  window.submitAnswerToQuestion = submitAnswerToQuestion;
+  window.toggleHostRole = toggleHostRole;
+  window.requestToSpeak = requestToSpeak;
+  window.stopSpeaking = stopSpeaking;
+  window.hostApproveSpeaker = hostApproveSpeaker;
+  window.hostRejectSpeaker = hostRejectSpeaker;
+  window.hostMuteCurrentSpeaker = hostMuteCurrentSpeaker;
+  window.toggleTranscriptPanel = toggleTranscriptPanel;
+  window.saveStudySession = saveStudySession;
+  window.init = init;
 
-  window.init();
-
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 </script>
 </body>
 </html>
