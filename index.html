@@ -399,6 +399,16 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       <div id="currentSpeakerActions"></div>
     </div>
 
+    <!-- Self Monitor Toggle for Hearing Yourself -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:var(--bg); padding:8px 12px; border-radius:8px; border:1px solid var(--border);">
+      <div style="font-size:0.8rem; color:var(--text)">
+        🎧 <b>Hear My Voice in Headphones:</b>
+      </div>
+      <button id="micMonitorBtn" onclick="toggleMicMonitor()" style="font-size:0.75rem; padding:5px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; cursor:pointer;">
+        🔈 Self-Monitor: OFF
+      </button>
+    </div>
+
     <div id="participantVoiceControls">
       <button id="requestToSpeakBtn" onclick="requestToSpeak()" class="primary-btn" style="background:#0284c7; display:flex; align-items:center; justify-content:center; gap:8px;">
         ✋ Request to Speak
@@ -411,7 +421,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     <div id="hostQueuePanel" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <h4 style="margin:0; font-size:0.9rem; color:#b45309;">👑 Host Moderation & Speaking Queue</h4>
-        <button onclick="saveStudySession()" style="font-size:0.75rem; padding:4px 10px; background:#16a34a; color:white; border:none; border-radius:6px;">💾 Save Session</button>
+        <button onclick="saveStudySession()" style="font-size:0.75rem; padding:4px 10px; background:#16a34a; color:white; border:none; border-radius:6px;">💾 Save Session & Audio</button>
       </div>
 
       <div style="font-size:0.8rem; font-weight:bold; color:var(--text-muted); margin-bottom:6px;">NEXT IN QUEUE:</div>
@@ -529,9 +539,9 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
   <div id="studySavedContainer" class="controls-card" style="padding:15px; display:none;">
     <h4 style="margin:0 0 10px 0; color:var(--primary)">📼 Saved Sessions & Replays</h4>
-    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Replay previous Bible study sessions, audio recordings, and view full transcripts with mentioned scriptures.</p>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Replay previous Bible study sessions, audio voice recordings, and view full transcripts.</p>
     <div id="savedSessionsFeed" style="display:flex; flex-direction:column; gap:12px; margin-top:12px;">
-      <div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session" button.</div>
+      <div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session & Audio" button.</div>
     </div>
   </div>
 </div>
@@ -888,6 +898,10 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   let speechRecognition = null;
   let mediaRecorder = null;
   let audioChunks = [];
+  let audioStream = null;
+  let audioContext = null;
+  let monitorNode = null;
+  let isMonitoring = false;
   let isTranscriptCollapsed = false;
 
   const bibleData = [
@@ -907,6 +921,15 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   ];
 
   const dom = id => document.getElementById(id);
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
 
   const syncChannel = 'BroadcastChannel' in window ? new BroadcastChannel('bible_pro_sync_channel') : null;
 
@@ -1138,6 +1161,52 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     updatePresence();
   }
 
+  /* --- SELF MONITORING (HEAR YOURSELF) ENGINE --- */
+  function toggleMicMonitor() {
+    isMonitoring = !isMonitoring;
+    const btn = dom('micMonitorBtn');
+    if (isMonitoring) {
+      if (btn) {
+        btn.innerText = "🔊 Self-Monitor: ON (Wear Headphones!)";
+        btn.style.background = "#dcfce7";
+        btn.style.color = "#15803d";
+        btn.style.fontWeight = "bold";
+      }
+      if (audioStream) setupMicMonitor(audioStream);
+      toast("Self-monitoring ON. Wear headphones to prevent echo!");
+    } else {
+      if (btn) {
+        btn.innerText = "🔈 Self-Monitor: OFF";
+        btn.style.background = "var(--card)";
+        btn.style.color = "var(--text)";
+        btn.style.fontWeight = "normal";
+      }
+      closeMicMonitor();
+      toast("Self-monitoring OFF.");
+    }
+  }
+
+  function setupMicMonitor(stream) {
+    try {
+      if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioContext.state === 'suspended') audioContext.resume();
+
+      if (monitorNode) monitorNode.disconnect();
+      const source = audioContext.createMediaStreamSource(stream);
+      monitorNode = audioContext.createGain();
+      monitorNode.gain.value = 1.0;
+      source.connect(monitorNode);
+      monitorNode.connect(audioContext.destination);
+    } catch(e) { console.error("Mic monitor setup error:", e); }
+  }
+
+  function closeMicMonitor() {
+    if (monitorNode) {
+      try { monitorNode.disconnect(); } catch(e) {}
+      monitorNode = null;
+    }
+  }
+
   async function requestToSpeak() {
     const roomSlug = state.studyRoom.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
     const reqBtn = dom('requestToSpeakBtn');
@@ -1178,7 +1247,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     } catch(e) {}
 
     updateMicUI(false, "Muted (Listener Mode)");
-    toast("Stopped speaking. Returned to listener mode.");
+    toast("Stopped speaking. Voice recording saved locally.");
   }
 
   async function hostApproveSpeaker(sessionId, userName) {
@@ -1406,11 +1475,25 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   async function startAudioRecording() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunks = [];
-      mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-      mediaRecorder.start();
+      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      if (isMonitoring) {
+        setupMicMonitor(audioStream);
+      }
+
+      mediaRecorder = new MediaRecorder(audioStream);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunks.push(e.data);
+        }
+      };
+      mediaRecorder.onstop = () => {
+        if (audioChunks.length > 0) {
+          state.audioRecording = new Blob(audioChunks, { type: 'audio/webm' });
+        }
+      };
+      mediaRecorder.start(1000);
     } catch(e) { console.error("Audio recording error:", e); }
   }
 
@@ -1418,12 +1501,13 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       try {
         mediaRecorder.stop();
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
-          state.audioRecording = blob;
-        };
       } catch(e) {}
     }
+    if (audioStream) {
+      audioStream.getTracks().forEach(t => t.stop());
+      audioStream = null;
+    }
+    closeMicMonitor();
   }
 
   async function saveStudySession() {
@@ -1433,20 +1517,30 @@ input.title-input:focus { border-bottom-color: var(--primary); }
     const title = prompt("Enter Title for Saved Study Session:", `${state.studyRoom} - ${new Date().toLocaleDateString()}`);
     if (!title) return;
 
+    let audioBase64 = null;
+    if (state.audioRecording && state.audioRecording.size > 0) {
+      try {
+        audioBase64 = await blobToBase64(state.audioRecording);
+      } catch(e) {
+        console.warn("Could not encode audio file:", e);
+      }
+    }
+
     try {
       await addDoc(collection(db, "study_rooms", roomSlug, "saved_sessions"), {
         title: title,
         roomName: state.studyRoom,
         hostName: state.userName,
+        audioData: audioBase64 || null,
         savedAt: new Date().toISOString(),
         dateStr: new Date().toLocaleDateString(),
         timeStr: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
       });
 
-      toast("Study Session Saved!");
+      toast("Study Session & Voice Audio Saved!");
     } catch(e) {
       console.error("Save session error:", e);
-      alert("Error saving session.");
+      alert("Error saving session. If the audio is too long, please record shorter sessions.");
     }
   }
 
@@ -1460,7 +1554,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
 
     savedSessionsUnsubscribe = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
-        feed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session" button.</div>';
+        feed.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">No saved sessions yet. Hosts can save a study session using the "Save Session & Audio" button.</div>';
         return;
       }
 
@@ -1468,9 +1562,21 @@ input.title-input:focus { border-bottom-color: var(--primary); }
       snapshot.forEach((docSnap) => {
         const sData = docSnap.data();
 
+        let playerHtml = '';
+        if (sData.audioData) {
+          playerHtml = `
+            <div style="margin-top:10px; background:var(--bg); padding:10px; border-radius:8px; border:1px solid var(--border)">
+              <span style="font-size:0.75rem; font-weight:bold; color:var(--primary); display:block; margin-bottom:6px">▶ Replay Host Audio Recording:</span>
+              <audio controls src="${sData.audioData}" style="width:100%; height:36px; outline:none; border-radius:6px;"></audio>
+            </div>
+          `;
+        } else {
+          playerHtml = `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; font-style:italic">No voice audio attached to this session.</div>`;
+        }
+
         html += `
           <div class="controls-card" style="border-left:4px solid #16a34a; margin-bottom:10px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:6px;">
               <div>
                 <b style="font-size:1rem; color:var(--primary);">${sData.title}</b>
                 <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">
@@ -1479,6 +1585,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
               </div>
               <span style="font-size:0.75rem; font-weight:bold; background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:12px;">📼 Saved Session</span>
             </div>
+            ${playerHtml}
           </div>
         `;
       });
@@ -3162,6 +3269,7 @@ input.title-input:focus { border-bottom-color: var(--primary); }
   window.askStudyQuestion = askStudyQuestion;
   window.submitAnswerToQuestion = submitAnswerToQuestion;
   window.toggleHostRole = toggleHostRole;
+  window.toggleMicMonitor = toggleMicMonitor;
   window.requestToSpeak = requestToSpeak;
   window.stopSpeaking = stopSpeaking;
   window.hostApproveSpeaker = hostApproveSpeaker;
