@@ -44,17 +44,28 @@ body { font-family: var(--font-main); background: var(--bg); color: var(--text);
 .header { position: fixed; top: 0; left: 0; width: 100%; background: var(--primary); color: white; z-index: 1000; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); box-sizing: border-box; padding-top: var(--safe-area-top); }
 .header-btn { background: none; border: none; color: white; font-size: 1.35rem; padding: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-/* DYNAMIC HEADER TRACKER */
+/* DYNAMIC HEADER TRACKER & QUICK NAV TRIGGER */
 .header-title-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   max-width: calc(100vw - 210px);
   overflow: hidden;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.2s, transform 0.15s;
+}
+.header-title-container:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.header-title-container:active {
+  transform: scale(0.97);
 }
 #headerTitle {
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   letter-spacing: -0.3px;
   white-space: nowrap;
   overflow: hidden;
@@ -65,14 +76,19 @@ body { font-family: var(--font-main); background: var(--bg); color: var(--text);
   gap: 6px;
 }
 .header-verse-pill {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.28);
   color: #fff;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: bold;
   padding: 2px 7px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   animation: fadeIn 0.2s ease-in-out;
+}
+.header-dropdown-icon {
+  font-size: 0.75rem;
+  color: #ffffff;
+  opacity: 0.85;
 }
 
 .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: var(--card); border-right: 1px solid var(--border); z-index: 2000; transform: translateX(-100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding-top: var(--safe-area-top); }
@@ -116,10 +132,59 @@ button.primary-btn { background: var(--primary); color: white; border: none; wid
 .case-btn { color: #1e40af; font-weight: bold; font-size: 0.75rem !important; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .ai-rel-btn { color: #0284c7; font-weight: bold; font-size: 0.75rem !important; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: 1px solid #7dd3fc; }
 
-.user-block { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.95rem; display: flex; gap: 6px; align-items: flex-start; flex-direction: column; overflow-x: auto; cursor: pointer; }
+/* COLLAPSIBLE USER NOTE & PRAYER BLOCKS */
+.user-block { 
+  margin-top: 12px; 
+  padding: 10px 12px; 
+  border-radius: 8px; 
+  font-size: 0.95rem; 
+  display: flex; 
+  flex-direction: column; 
+  overflow-x: auto; 
+  transition: all 0.2s ease;
+}
 .user-note { background: var(--note-bg); border-left: 3px solid var(--note-border); color: #422006; }
 .user-prayer { background: var(--prayer-bg); border-left: 3px solid var(--prayer-border); color: #172554; }
 .note-title { font-weight: bold; color: var(--primary); display: block; margin-bottom: 2px; }
+
+.note-toggle-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  padding: 2px 0;
+  user-select: none;
+}
+.note-toggle-title {
+  font-weight: bold;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.note-toggle-arrow {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+body.dark .note-toggle-arrow {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.note-collapsible-content {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.12);
+  display: none;
+  animation: fadeIn 0.2s ease-in-out;
+}
+body.dark .note-collapsible-content {
+  border-top-color: rgba(255, 255, 255, 0.18);
+}
 
 .note-meta-footer {
   display: flex;
@@ -148,6 +213,73 @@ body.dark .note-meta-footer {
 }
 body.dark .locked-note-badge {
   color: #fcd34d;
+}
+
+/* QUICK SELECTOR MODAL STYLES */
+.quick-nav-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.quick-nav-tab-btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.quick-nav-tab-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.quick-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.quick-nav-num-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.quick-nav-item-btn {
+  padding: 10px 6px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quick-nav-item-btn:hover {
+  background: #fee2e2;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.quick-nav-item-btn.selected {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }
 
 /* STUDY ROOM DUAL-PANEL LAYOUT */
@@ -397,6 +529,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 
 #passagePreviewModal { z-index: 6000; }
 #dictionaryModal { z-index: 6500; }
+#quickNavModal { z-index: 5200; }
+#compareModal { z-index: 5600; }
 
 /* AI RELATIONSHIP STYLES */
 .ai-header-badge { display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0369a1; font-size: 0.75rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; margin-bottom: 8px; }
@@ -451,11 +585,12 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 <div class="header">
   <div style="display:flex; align-items:center; gap:10px">
     <button class="header-btn" onclick="toggleSidebar()">☰</button>
-    <!-- DYNAMIC LIVE READING TRACKER HEADER -->
-    <div class="header-title-container">
+    <!-- CLICKABLE LIVE READING TRACKER & QUICK BIBLE SELECTOR -->
+    <div class="header-title-container" onclick="openQuickNavModal()" title="Tap to select Book, Chapter & Verse">
       <div id="headerTitle">
         <span>Genesis 1</span><span class="header-verse-pill">vs 1</span>
       </div>
+      <span class="header-dropdown-icon">▼</span>
     </div>
   </div>
   <div style="display:flex; gap:5px">
@@ -506,7 +641,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
     </div>
   </div>
   <div style="text-align:center; font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">
-      💡 Tip: The header updates live with your <b>Current Verse</b> as you scroll down. Tap <b>🔗 Related</b> on any verse to see theological connections.
+      💡 Tip: Tap the <b>top header title</b> to jump directly, or tap <b>⚖️ Compare</b> on any verse to view all Bible translations side-by-side.
   </div>
   <div id="bible-content"><div style="text-align:center; padding:40px; color:var(--text-muted)">Loading Bible Reader...</div></div>
 </div>
@@ -789,6 +924,74 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
         <button onclick="loadDaily()" style="margin-bottom:10px">🔄 New Random Verse</button>
         <div id="daily-card"></div>
     </div>
+</div>
+
+<!-- TOP HEADER QUICK BIBLE SELECTOR MODAL -->
+<div class="modal" id="quickNavModal">
+  <div class="modal-content" style="max-width:540px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div>
+        <span class="ai-header-badge">📖 Quick Navigation</span>
+        <h3 id="quickNavBreadcrumb" style="margin:2px 0 0 0; color:var(--primary); font-size:1.15rem;">Select Book & Chapter</h3>
+      </div>
+      <button onclick="closeModal('quickNavModal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted)">&times;</button>
+    </div>
+
+    <!-- Navigation Step Tabs -->
+    <div class="quick-nav-tabs">
+      <button class="quick-nav-tab-btn active" id="tabNavBooks" onclick="setQuickNavTab('books')">1. Book</button>
+      <button class="quick-nav-tab-btn" id="tabNavChapters" onclick="setQuickNavTab('chapters')">2. Chapter</button>
+      <button class="quick-nav-tab-btn" id="tabNavVerses" onclick="setQuickNavTab('verses')">3. Verse</button>
+    </div>
+
+    <!-- Book Selection Panel -->
+    <div id="quickNavBooksPanel">
+      <input type="text" id="quickNavSearchInput" placeholder="🔍 Filter book name (e.g. John, Gen, Rom)..." oninput="filterQuickNavBooks(this.value)" style="width:100%; box-sizing:border-box; margin-bottom:10px; padding:8px 12px; font-size:0.9rem;">
+      <div id="quickNavBooksGrid" class="quick-nav-grid"></div>
+    </div>
+
+    <!-- Chapter Selection Panel -->
+    <div id="quickNavChaptersPanel" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span id="quickNavSelectedBookName" style="font-weight:bold; color:var(--primary);">Genesis</span>
+        <button onclick="setQuickNavTab('books')" style="font-size:0.75rem; padding:4px 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px;">⬅ Change Book</button>
+      </div>
+      <div id="quickNavChaptersGrid" class="quick-nav-num-grid"></div>
+    </div>
+
+    <!-- Verse Selection Panel -->
+    <div id="quickNavVersesPanel" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span id="quickNavSelectedChapName" style="font-weight:bold; color:var(--primary);">Genesis 1</span>
+        <button onclick="setQuickNavTab('chapters')" style="font-size:0.75rem; padding:4px 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px;">⬅ Change Chapter</button>
+      </div>
+      <div id="quickNavVersesGrid" class="quick-nav-num-grid"></div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <button onclick="closeModal('quickNavModal')" style="width:100%; border:none; background:transparent; color:gray">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- BIBLE VERSION COMPARISON MODAL -->
+<div class="modal" id="compareModal">
+  <div class="modal-content" style="max-width:540px">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+      <div>
+        <span class="ai-header-badge" style="background:#fef3c7; color:#92400e;">⚖️ Bible Version Comparison</span>
+        <h3 id="compareModalRef" style="margin:2px 0 0 0; color:var(--primary)">Genesis 1:1</h3>
+      </div>
+      <button onclick="closeModal('compareModal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted)">&times;</button>
+    </div>
+
+    <div id="compareLoader" class="scanning-loader" style="display:none; margin-top:6px; margin-bottom:12px;"></div>
+    <div id="compareList" style="max-height:60vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-right:4px;"></div>
+
+    <div style="margin-top:15px">
+      <button onclick="closeModal('compareModal')" class="primary-btn" style="background:var(--bg); color:var(--text); border:1px solid var(--border); box-shadow:none;">Close</button>
+    </div>
+  </div>
 </div>
 
 <!-- CASE STUDY MODAL -->
@@ -1161,6 +1364,22 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   let recordedMimeType = 'audio/webm';
   let isSpeechActive = false;
 
+  // Temp state for Quick Navigator
+  let quickNavSelectedBook = 1;
+  let quickNavSelectedChap = 1;
+
+  const availableVersions = [
+    { code: 'NKJV', name: 'New King James Version' },
+    { code: 'KJV',  name: 'King James Version' },
+    { code: 'NIV',  name: 'New International Version' },
+    { code: 'AMP',  name: 'Amplified Bible' },
+    { code: 'GNB',  name: 'Good News Bible' },
+    { code: 'WEB',  name: 'World English Bible' },
+    { code: 'ASV',  name: 'American Standard Version' },
+    { code: 'YLT',  name: 'Young\'s Literal Translation' },
+    { code: 'BBE',  name: 'Bible in Basic English' }
+  ];
+
   const bibleData = [
     {n:"Genesis",c:50},{n:"Exodus",c:40},{n:"Leviticus",c:27},{n:"Numbers",c:36},{n:"Deuteronomy",c:34},
     {n:"Joshua",c:24},{n:"Judges",c:21},{n:"Ruth",c:4},{n:"1 Samuel",c:31},{n:"2 Samuel",c:24},
@@ -1244,6 +1463,258 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 
   window.addEventListener('scroll', onBibleScroll, { passive: true });
 
+  /* --- BIBLE VERSION COMPARISON CONTROLLER --- */
+  async function openCompareModal(bookName, bookNum, chapter, verseNum) {
+    const refStr = `${bookName} ${chapter}:${verseNum}`;
+    if (dom('compareModalRef')) dom('compareModalRef').innerText = refStr;
+    if (dom('compareList')) dom('compareList').innerHTML = '';
+    if (dom('compareLoader')) dom('compareLoader').style.display = 'block';
+    if (dom('compareModal')) dom('compareModal').classList.add('open');
+
+    try {
+      const fetchPromises = availableVersions.map(async (verObj) => {
+        try {
+          const res = await fetch(`https://bolls.life/get-verse/${verObj.code}/${bookNum}/${chapter}/${verseNum}/`);
+          if (res.ok) {
+            const data = await res.json();
+            return {
+              code: verObj.code,
+              name: verObj.name,
+              text: data.text || '',
+              success: true
+            };
+          }
+          const chRes = await fetch(`https://bolls.life/get-chapter/${verObj.code}/${bookNum}/${chapter}/`);
+          if (chRes.ok) {
+            const chData = await chRes.json();
+            const match = chData.find(x => x.verse == verseNum);
+            if (match && match.text) {
+              return {
+                code: verObj.code,
+                name: verObj.name,
+                text: match.text,
+                success: true
+              };
+            }
+          }
+          return { code: verObj.code, name: verObj.name, text: '', success: false };
+        } catch (err) {
+          return { code: verObj.code, name: verObj.name, text: '', success: false };
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+
+      if (dom('compareLoader')) dom('compareLoader').style.display = 'none';
+
+      let html = '';
+      results.forEach(res => {
+        if (res.success && res.text) {
+          const isCurrent = (res.code === state.version);
+          html += `
+            <div class="verse-card ${isCurrent ? 'reading-now' : ''}" style="margin-bottom:0; padding:14px; border:1px solid var(--border); border-left:4px solid ${isCurrent ? 'var(--primary)' : '#0284c7'}">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                <span style="font-weight:bold; font-size:0.88rem; color:${isCurrent ? 'var(--primary)' : '#0284c7'}">
+                  ${res.code} <small style="color:var(--text-muted); font-weight:normal;">(${res.name})</small>
+                </span>
+                ${isCurrent 
+                  ? '<span style="font-size:0.72rem; font-weight:bold; color:var(--primary); background:rgba(185,28,28,0.1); padding:2px 7px; border-radius:10px;">Current</span>' 
+                  : `<button onclick="switchToVersionFromCompare('${res.code}')" style="font-size:0.75rem; padding:3px 8px; border-radius:6px; background:var(--bg); border:1px solid var(--border); cursor:pointer;">Switch ➡</button>`
+                }
+              </div>
+              <div style="font-size:0.95rem; line-height:1.5;">${wrapWords(res.text)}</div>
+            </div>
+          `;
+        }
+      });
+
+      if (!html) {
+        html = '<div style="text-align:center; padding:20px; color:var(--text-muted)">Unable to load translation comparisons at this moment.</div>';
+      }
+
+      if (dom('compareList')) dom('compareList').innerHTML = html;
+    } catch (e) {
+      if (dom('compareLoader')) dom('compareLoader').style.display = 'none';
+      if (dom('compareList')) dom('compareList').innerHTML = '<div style="text-align:center; padding:20px; color:red">Error loading comparisons.</div>';
+    }
+  }
+
+  function switchToVersionFromCompare(verCode) {
+    state.version = verCode;
+    if (dom('verSelect')) dom('verSelect').value = verCode;
+    closeModal('compareModal');
+    loadBible();
+    toast(`Switched translation to ${verCode}`);
+  }
+
+  /* --- QUICK BIBLE SELECTOR MODAL CONTROLLER --- */
+  function openQuickNavModal() {
+    quickNavSelectedBook = state.book || 1;
+    quickNavSelectedChap = state.chapter || 1;
+    setQuickNavTab('books');
+    renderQuickNavBooks();
+    if (dom('quickNavSearchInput')) dom('quickNavSearchInput').value = '';
+    dom('quickNavModal').classList.add('open');
+  }
+
+  function setQuickNavTab(tab) {
+    const pBooks = dom('quickNavBooksPanel');
+    const pChaps = dom('quickNavChaptersPanel');
+    const pVerses = dom('quickNavVersesPanel');
+    const bBooks = dom('tabNavBooks');
+    const bChaps = dom('tabNavChapters');
+    const bVerses = dom('tabNavVerses');
+    const breadcrumb = dom('quickNavBreadcrumb');
+
+    [bBooks, bChaps, bVerses].forEach(b => b.classList.remove('active'));
+
+    const bName = bibleData[quickNavSelectedBook - 1] ? bibleData[quickNavSelectedBook - 1].n : 'Book';
+
+    if (tab === 'books') {
+      pBooks.style.display = 'block';
+      pChaps.style.display = 'none';
+      pVerses.style.display = 'none';
+      bBooks.classList.add('active');
+      if (breadcrumb) breadcrumb.innerText = 'Select a Book of the Bible';
+    } else if (tab === 'chapters') {
+      pBooks.style.display = 'none';
+      pChaps.style.display = 'block';
+      pVerses.style.display = 'none';
+      bChaps.classList.add('active');
+      if (breadcrumb) breadcrumb.innerText = `${bName} • Select Chapter`;
+      if (dom('quickNavSelectedBookName')) dom('quickNavSelectedBookName').innerText = `📖 ${bName}`;
+      renderQuickNavChapters();
+    } else if (tab === 'verses') {
+      pBooks.style.display = 'none';
+      pChaps.style.display = 'none';
+      pVerses.style.display = 'block';
+      bVerses.classList.add('active');
+      if (breadcrumb) breadcrumb.innerText = `${bName} ${quickNavSelectedChap} • Select Verse`;
+      if (dom('quickNavSelectedChapName')) dom('quickNavSelectedChapName').innerText = `📖 ${bName} Chapter ${quickNavSelectedChap}`;
+      renderQuickNavVerses();
+    }
+  }
+
+  function renderQuickNavBooks(filterQuery = '') {
+    const grid = dom('quickNavBooksGrid');
+    if (!grid) return;
+
+    const q = (filterQuery || '').toLowerCase().trim();
+    let html = '';
+
+    bibleData.forEach((b, idx) => {
+      const bNum = idx + 1;
+      if (!q || b.n.toLowerCase().includes(q) || (bNum <= 39 && q === 'ot') || (bNum > 39 && q === 'nt')) {
+        const isSelected = bNum === quickNavSelectedBook;
+        html += `
+          <button class="quick-nav-item-btn ${isSelected ? 'selected' : ''}" onclick="selectQuickNavBook(${bNum})">
+            ${b.n}
+          </button>
+        `;
+      }
+    });
+
+    if (!html) {
+      html = '<div style="grid-column:1/-1; padding:15px; text-align:center; color:var(--text-muted)">No books found.</div>';
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function filterQuickNavBooks(val) {
+    renderQuickNavBooks(val);
+  }
+
+  function selectQuickNavBook(bNum) {
+    quickNavSelectedBook = bNum;
+    quickNavSelectedChap = 1;
+    setQuickNavTab('chapters');
+  }
+
+  function renderQuickNavChapters() {
+    const grid = dom('quickNavChaptersGrid');
+    if (!grid) return;
+
+    const count = (bibleData[quickNavSelectedBook - 1] && bibleData[quickNavSelectedBook - 1].c) ? bibleData[quickNavSelectedBook - 1].c : 50;
+    let html = '';
+
+    for (let c = 1; c <= count; c++) {
+      const isSelected = (quickNavSelectedBook === state.book && c === state.chapter);
+      html += `
+        <button class="quick-nav-item-btn ${isSelected ? 'selected' : ''}" onclick="selectQuickNavChapter(${c})">
+          ${c}
+        </button>
+      `;
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function selectQuickNavChapter(chapNum) {
+    quickNavSelectedChap = chapNum;
+    setQuickNavTab('verses');
+  }
+
+  async function renderQuickNavVerses() {
+    const grid = dom('quickNavVersesGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:15px; color:var(--text-muted)">Loading verses...</div>';
+
+    let verseCount = 30; 
+    if (quickNavSelectedBook === state.book && quickNavSelectedChap === state.chapter && currentScriptureData && currentScriptureData.length > 0) {
+      verseCount = currentScriptureData.length;
+    } else {
+      try {
+        const res = await fetch(`https://bolls.life/get-chapter/${state.version}/${quickNavSelectedBook}/${quickNavSelectedChap}/`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) verseCount = data.length;
+        }
+      } catch (e) {}
+    }
+
+    let html = `
+      <div style="grid-column:1/-1; margin-bottom:8px;">
+        <button class="primary-btn" onclick="selectQuickNavVerse(1)" style="padding:10px; font-size:0.88rem; background:#0284c7;">
+          📖 Open Chapter ${quickNavSelectedChap} (From Verse 1)
+        </button>
+      </div>
+    `;
+
+    for (let v = 1; v <= verseCount; v++) {
+      const isSelected = (quickNavSelectedBook === state.book && quickNavSelectedChap === state.chapter && v === state.currentVerse);
+      html += `
+        <button class="quick-nav-item-btn ${isSelected ? 'selected' : ''}" onclick="selectQuickNavVerse(${v})">
+          ${v}
+        </button>
+      `;
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function selectQuickNavVerse(verseNum) {
+    closeModal('quickNavModal');
+    jumpTo(quickNavSelectedBook, quickNavSelectedChap, verseNum);
+  }
+
+  /* --- COLLAPSIBLE NOTE EXPAND/COLLAPSE ENGINE --- */
+  function toggleNoteCollapse(elementId) {
+    const contentEl = dom(`content_${elementId}`);
+    const arrowEl = dom(`arrow_${elementId}`);
+    if (!contentEl) return;
+
+    const isHidden = (contentEl.style.display === 'none' || !contentEl.style.display);
+    if (isHidden) {
+      contentEl.style.display = 'block';
+      if (arrowEl) arrowEl.innerText = '▲';
+    } else {
+      contentEl.style.display = 'none';
+      if (arrowEl) arrowEl.innerText = '▼';
+    }
+  }
+
   /* --- AUTHOR PROFILE & PASSWORD SECURITY LOGIC --- */
   function openProfileModal() {
     if (dom('regAuthorName')) dom('regAuthorName').value = state.authorName;
@@ -1306,7 +1777,52 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
     return { formattedHtml, extractedRefs };
   }
 
-  /* --- AI & CUSTOM RELATIONSHIPS LOGIC WITH EDIT/DELETE SUPPORT --- */
+  /* --- TWO-WAY NORMALIZATION & LOOKUP HELPERS --- */
+  function normRef(str) {
+    if (!str) return '';
+    return str.trim().replace(/\s+/g, ' ').replace(/[–—]/g, '-').toLowerCase();
+  }
+
+  function getCustomRelationshipsForRef(refKey) {
+    const normCurrent = normRef(refKey);
+    const results = [];
+    const seenTargets = new Set();
+
+    for (const [srcKey, relList] of Object.entries(state.userRelationships || {})) {
+      if (!Array.isArray(relList)) continue;
+      const normSrc = normRef(srcKey);
+
+      for (const rel of relList) {
+        if (!rel || !rel.reference) continue;
+        const normTarget = normRef(rel.reference);
+
+        if (normSrc === normCurrent) {
+          if (!seenTargets.has(normTarget)) {
+            seenTargets.add(normTarget);
+            results.push({
+              ...rel,
+              reference: rel.reference,
+              sourceRef: srcKey,
+              isCustom: true
+            });
+          }
+        } else if (normTarget === normCurrent) {
+          if (!seenTargets.has(normSrc)) {
+            seenTargets.add(normSrc);
+            results.push({
+              ...rel,
+              reference: srcKey,
+              sourceRef: refKey,
+              isCustom: true
+            });
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+  /* --- AI & CUSTOM RELATIONSHIPS LOGIC WITH TWO-WAY LINKING --- */
   async function openAIRelationships(bookName, chapter, verse, verseText) {
     activeSourceRef = `${bookName} ${chapter}:${verse}`;
     if (dom('aiRelModalRef')) dom('aiRelModalRef').innerText = activeSourceRef;
@@ -1371,11 +1887,9 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 
     const refKey = data.reference;
     const dismissedList = state.dismissedAIRelationships[refKey] || [];
-    const customRels = state.userRelationships[refKey] || [];
-    const formattedCustom = customRels.map(r => ({ ...r, isCustom: true }));
+    const formattedCustom = getCustomRelationshipsForRef(refKey);
     
-    // Filter out dismissed items
-    const nonDismissedAI = (data.relationships || []).filter(r => !dismissedList.includes(r.reference));
+    const nonDismissedAI = (data.relationships || []).filter(r => !dismissedList.includes(r.reference) && !formattedCustom.some(c => normRef(c.reference) === normRef(r.reference)));
     const mergedList = [...formattedCustom, ...nonDismissedAI];
 
     let filteredRels = mergedList;
@@ -1405,7 +1919,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
             </div>
             <div style="display:flex; gap:6px; align-items:center; margin-top:4px">
               <span class="ai-rel-type-pill">${rel.type}</span>
-              ${rel.isCustom ? '<span style="font-size:0.7rem; color:#16a34a; font-weight:bold">● Custom Connection</span>' : ''}
+              ${rel.isCustom ? '<span style="font-size:0.7rem; color:#16a34a; font-weight:bold">● 2-Way Connection</span>' : ''}
             </div>
             <div class="ai-rel-explanation">"${rel.explanation}"</div>
           </div>
@@ -1423,11 +1937,24 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 
   function deleteAIRelationship(sourceRef, targetRef, isCustom) {
     if (isCustom) {
-      if (state.userRelationships[sourceRef]) {
-        state.userRelationships[sourceRef] = state.userRelationships[sourceRef].filter(r => r.reference !== targetRef);
-        localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
-        pushToCloud();
+      const normSrc = normRef(sourceRef);
+      const normTgt = normRef(targetRef);
+
+      for (const [k, list] of Object.entries(state.userRelationships || {})) {
+        if (!Array.isArray(list)) continue;
+        const normK = normRef(k);
+        if (normK === normSrc) {
+          state.userRelationships[k] = list.filter(r => normRef(r.reference) !== normTgt);
+        } else if (normK === normTgt) {
+          state.userRelationships[k] = list.filter(r => normRef(r.reference) !== normSrc);
+        }
+        if (state.userRelationships[k] && state.userRelationships[k].length === 0) {
+          delete state.userRelationships[k];
+        }
       }
+
+      localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
+      pushToCloud();
     } else {
       if (!state.dismissedAIRelationships[sourceRef]) state.dismissedAIRelationships[sourceRef] = [];
       if (!state.dismissedAIRelationships[sourceRef].includes(targetRef)) {
@@ -1460,15 +1987,29 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   }
 
   function openEditCustomRel(sourceRef, targetRef) {
-    editingCustomRelTarget = targetRef;
     activeSourceRef = sourceRef;
-    const list = state.userRelationships[sourceRef] || [];
-    const item = list.find(r => r.reference === targetRef);
+    editingCustomRelTarget = targetRef;
+
+    const normSrc = normRef(sourceRef);
+    const normTgt = normRef(targetRef);
+    let item = null;
+
+    if (state.userRelationships[sourceRef]) {
+      item = state.userRelationships[sourceRef].find(r => normRef(r.reference) === normTgt);
+    }
+    if (!item) {
+      for (const [k, list] of Object.entries(state.userRelationships || {})) {
+        if (normRef(k) === normTgt) {
+          item = (list || []).find(r => normRef(r.reference) === normSrc);
+          if (item) break;
+        }
+      }
+    }
     if (!item) return;
 
     if (dom('customRelModalTitle')) dom('customRelModalTitle').innerText = "Edit Manual Scripture Connection";
     if (dom('customRelSourceRef')) dom('customRelSourceRef').innerText = sourceRef;
-    if (dom('customRelTargetRef')) dom('customRelTargetRef').value = item.reference || '';
+    if (dom('customRelTargetRef')) dom('customRelTargetRef').value = targetRef || '';
     if (dom('customRelType')) dom('customRelType').value = item.type || 'Same Theme';
     if (dom('customRelScore')) {
       dom('customRelScore').value = item.score || 90;
@@ -1488,29 +2029,59 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
     if (!target) return alert("Please enter a target scripture reference.");
     if (!src) return alert("Source scripture reference missing.");
 
-    if (!state.userRelationships[src]) state.userRelationships[src] = [];
+    if (normRef(src) === normRef(target)) {
+      return alert("Source and target scripture references cannot be the same.");
+    }
+
+    const normSrc = normRef(src);
+    const normTarget = normRef(target);
 
     if (editingCustomRelTarget) {
-      // Update existing
-      const idx = state.userRelationships[src].findIndex(r => r.reference === editingCustomRelTarget);
-      if (idx !== -1) {
-        state.userRelationships[src][idx] = {
-          reference: target,
-          type: type,
-          score: score,
-          explanation: exp || `Custom connection to ${src}`
-        };
-      } else {
-        state.userRelationships[src].push({
-          reference: target,
-          type: type,
-          score: score,
-          explanation: exp || `Custom connection to ${src}`
-        });
+      const normOldTarget = normRef(editingCustomRelTarget);
+      for (const [k, list] of Object.entries(state.userRelationships || {})) {
+        if (!Array.isArray(list)) continue;
+        const normK = normRef(k);
+        if (normK === normSrc) {
+          state.userRelationships[k] = list.filter(r => normRef(r.reference) !== normOldTarget);
+        } else if (normK === normOldTarget) {
+          state.userRelationships[k] = list.filter(r => normRef(r.reference) !== normSrc);
+        }
+        if (state.userRelationships[k] && state.userRelationships[k].length === 0) {
+          delete state.userRelationships[k];
+        }
       }
       editingCustomRelTarget = null;
-    } else {
-      // Create new
+    }
+
+    let alreadyUpdated = false;
+    for (const [k, list] of Object.entries(state.userRelationships || {})) {
+      if (!Array.isArray(list)) continue;
+      const normK = normRef(k);
+      if (normK === normSrc) {
+        const match = list.find(r => normRef(r.reference) === normTarget);
+        if (match) {
+          match.reference = target;
+          match.type = type;
+          match.score = score;
+          match.explanation = exp || `Custom connection to ${src}`;
+          alreadyUpdated = true;
+          break;
+        }
+      } else if (normK === normTarget) {
+        const match = list.find(r => normRef(r.reference) === normSrc);
+        if (match) {
+          match.reference = src;
+          match.type = type;
+          match.score = score;
+          match.explanation = exp || `Custom connection to ${target}`;
+          alreadyUpdated = true;
+          break;
+        }
+      }
+    }
+
+    if (!alreadyUpdated) {
+      if (!state.userRelationships[src]) state.userRelationships[src] = [];
       state.userRelationships[src].push({
         reference: target,
         type: type,
@@ -1525,7 +2096,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
     if (currentAIRelData) {
       renderAIRelationships(currentAIRelData, currentAIFilter);
     }
-    toast("Manual connection & study notes saved!");
+    toast("Two-way scripture connection & study notes saved!");
   }
 
   function startCustomCaseFromModal() {
@@ -3426,11 +3997,15 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
           if (nt) {
               const { title, body, pwd, author, date, time } = parseNoteData(nt);
               const isUnlocked = !pwd || (state.authorPassword && state.authorPassword === pwd) || unlockedNotesInSession.has(vid);
+              const elementId = `note_${vid.replace(/-/g, '_')}`;
 
               if (!isUnlocked) {
                 noteHtml = `
-                  <div class="user-block user-note" onclick="event.stopPropagation(); openEditor('${vid}','note')">
-                    <div class="locked-note-badge">🔒 Password-Protected Note (Tap to Unlock)</div>
+                  <div class="user-block user-note">
+                    <div class="note-toggle-bar" onclick="event.stopPropagation(); openEditor('${vid}','note')">
+                      <div class="locked-note-badge">🔒 Password-Protected Note (Tap to Unlock)</div>
+                      <span class="note-toggle-arrow">🔑</span>
+                    </div>
                     <div class="note-meta-footer">
                       <span>✍️ Author: <b>${author || 'Protected'}</b></span>
                       <span>📅 ${date || 'Locked'}</span>
@@ -3438,14 +4013,23 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
                   </div>
                 `;
               } else {
-                const titleHtml = title ? `<span class="note-title">${title}</span>` : '';
+                const titleText = title || "Personal Bible Note";
                 const dateHtml = (date || time) ? ` • 📅 ${date} ${time ? 'at ' + time : ''}` : '';
                 noteHtml = `
-                  <div class="user-block user-note" onclick="event.stopPropagation(); openEditor('${vid}','note')">
-                    <div>${titleHtml}📝 ${body}</div>
-                    <div class="note-meta-footer">
-                      <span>✍️ Author: <b>${author || 'Berean Scholar'}</b>${dateHtml}</span>
-                      ${pwd ? '<span>🔒 Protected</span>' : ''}
+                  <div class="user-block user-note">
+                    <div class="note-toggle-bar" onclick="event.stopPropagation(); toggleNoteCollapse('${elementId}')">
+                      <span class="note-toggle-title">
+                        📝 <span>${titleText}</span>
+                      </span>
+                      <span class="note-toggle-arrow" id="arrow_${elementId}">▼</span>
+                    </div>
+                    <div class="note-collapsible-content" id="content_${elementId}">
+                      <div onclick="event.stopPropagation(); openEditor('${vid}','note')" style="cursor:pointer;" title="Tap to edit note">${body}</div>
+                      <div class="note-meta-footer">
+                        <span>✍️ Author: <b>${author || 'Berean Scholar'}</b>${dateHtml}</span>
+                        ${pwd ? '<span>🔒 Protected</span>' : ''}
+                        <span onclick="event.stopPropagation(); openEditor('${vid}','note')" style="color:var(--primary); font-weight:bold; cursor:pointer;">✏️ Edit</span>
+                      </div>
                     </div>
                   </div>
                 `;
@@ -3454,13 +4038,17 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 
           let prayerHtml = '';
           if (pt) {
-             const { body, pwd, author, date, time } = parseNoteData(pt);
+             const { title, body, pwd, author, date, time } = parseNoteData(pt);
              const isUnlocked = !pwd || (state.authorPassword && state.authorPassword === pwd) || unlockedNotesInSession.has(vid);
+             const elementId = `prayer_${vid.replace(/-/g, '_')}`;
 
              if (!isUnlocked) {
                 prayerHtml = `
-                  <div class="user-block user-prayer" onclick="event.stopPropagation(); openEditor('${vid}','prayer')">
-                    <div class="locked-note-badge" style="color:#1d4ed8">🔒 Password-Protected Prayer (Tap to Unlock)</div>
+                  <div class="user-block user-prayer">
+                    <div class="note-toggle-bar" onclick="event.stopPropagation(); openEditor('${vid}','prayer')">
+                      <div class="locked-note-badge" style="color:#1d4ed8">🔒 Password-Protected Prayer (Tap to Unlock)</div>
+                      <span class="note-toggle-arrow">🔑</span>
+                    </div>
                     <div class="note-meta-footer">
                       <span>✍️ Author: <b>${author || 'Protected'}</b></span>
                       <span>📅 ${date || 'Locked'}</span>
@@ -3468,13 +4056,23 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
                   </div>
                 `;
              } else {
+                const titleText = title || "Verse Prayer";
                 const dateHtml = (date || time) ? ` • 📅 ${date} ${time ? 'at ' + time : ''}` : '';
                 prayerHtml = `
-                  <div class="user-block user-prayer" onclick="event.stopPropagation(); openEditor('${vid}','prayer')">
-                    <div>🙏 ${body}</div>
-                    <div class="note-meta-footer">
-                      <span>✍️ Author: <b>${author || 'Berean Scholar'}</b>${dateHtml}</span>
-                      ${pwd ? '<span>🔒 Protected</span>' : ''}
+                  <div class="user-block user-prayer">
+                    <div class="note-toggle-bar" onclick="event.stopPropagation(); toggleNoteCollapse('${elementId}')">
+                      <span class="note-toggle-title" style="color:#1d4ed8;">
+                        🙏 <span>${titleText}</span>
+                      </span>
+                      <span class="note-toggle-arrow" id="arrow_${elementId}">▼</span>
+                    </div>
+                    <div class="note-collapsible-content" id="content_${elementId}">
+                      <div onclick="event.stopPropagation(); openEditor('${vid}','prayer')" style="cursor:pointer;" title="Tap to edit prayer">${body}</div>
+                      <div class="note-meta-footer">
+                        <span>✍️ Author: <b>${author || 'Berean Scholar'}</b>${dateHtml}</span>
+                        ${pwd ? '<span>🔒 Protected</span>' : ''}
+                        <span onclick="event.stopPropagation(); openEditor('${vid}','prayer')" style="color:#1d4ed8; font-weight:bold; cursor:pointer;">✏️ Edit</span>
+                      </div>
                     </div>
                   </div>
                 `;
@@ -3486,13 +4084,17 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 
           html += `<div class="verse-card ${hl}" id="v${v.verse}" data-verse-num="${v.verse}">
               <div class="v-header">
-                  <span style="color:var(--primary); display:flex; align-items:center; gap:6px">
+                  <span style="color:var(--primary); display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                       ${v.verse} 
                       <span class="ai-rel-btn" onclick="event.stopPropagation(); openAIRelationships('${bookName}', '${state.chapter}', '${v.verse}', '${cleanTextEscaped}')">
                         🔗 Related
                       </span>
+                      <span class="ai-rel-btn" style="background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="event.stopPropagation(); openCompareModal('${bookName}', ${state.book}, ${state.chapter}, ${v.verse})">
+                        ⚖️ Compare
+                      </span>
                   </span>
                   <div class="action-icons">
+                    <span onclick="event.stopPropagation(); openCompareModal('${bookName}', ${state.book}, ${state.chapter}, ${v.verse})" title="Compare Translations">⚖️</span>
                     <span onclick="event.stopPropagation(); openEditor('${vid}','note')" title="Add Note">📝</span>
                     <span onclick="event.stopPropagation(); openEditor('${vid}','prayer')" title="Add Prayer">🙏</span>
                     <span onclick="event.stopPropagation(); toggleHighlight('${vid}','yellow')" title="Highlight Verse">🟡</span>
@@ -3689,31 +4291,47 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
       }); 
 
       dom('prayer-list').innerHTML = list.length ? list.map(p=> {
-          const isUnlocked = !p.pwd || (state.authorPassword && state.authorPassword === p.pwd) || unlockedNotesInSession.has(p.id);
+          const isUnlocked = !p.pwd || (state.authorPassword && state.authorPassword === pwd) || unlockedNotesInSession.has(p.id);
           const dateHtml = (p.date || p.time) ? ` • 📅 ${p.date} ${p.time ? 'at ' + p.time : ''}` : '';
-          
+          const elementId = `plist_${p.id.replace(/-/g, '_')}`;
+
           if (!isUnlocked) {
             return `
-              <div class="verse-card" onclick="openEditor('${p.id}','prayer')">
+              <div class="verse-card">
                 <div class="v-header">${p.ref}</div>
-                <div class="locked-note-badge" style="color:#1d4ed8">🔒 Password-Protected Prayer (Tap to Unlock)</div>
-                <div class="note-meta-footer">
-                  <span>✍️ Author: <b>${p.author || 'Protected'}</b></span>
-                  <span>📅 ${p.date || 'Locked'}</span>
+                <div class="user-block user-prayer">
+                  <div class="note-toggle-bar" onclick="openEditor('${p.id}','prayer')">
+                    <div class="locked-note-badge" style="color:#1d4ed8">🔒 Password-Protected Prayer (Tap to Unlock)</div>
+                    <span class="note-toggle-arrow">🔑</span>
+                  </div>
+                  <div class="note-meta-footer">
+                    <span>✍️ Author: <b>${p.author || 'Protected'}</b></span>
+                    <span>📅 ${p.date || 'Locked'}</span>
+                  </div>
                 </div>
               </div>
             `;
           }
 
-          const titleHtml = p.title ? `<div style="font-weight:bold;color:var(--primary);font-size:0.9rem">${p.title}</div>` : '';
+          const titleText = p.title || `Prayer for ${p.ref}`;
           return `
-            <div class="verse-card" onclick="openEditor('${p.id}','prayer')">
+            <div class="verse-card">
               <div class="v-header">${p.ref}</div>
-              ${titleHtml}
-              <div style="font-style:italic">${p.t}</div>
-              <div class="note-meta-footer">
-                <span>✍️ Author: <b>${p.author || 'Berean Scholar'}</b>${dateHtml}</span>
-                ${p.pwd ? '<span>🔒 Protected</span>' : ''}
+              <div class="user-block user-prayer">
+                <div class="note-toggle-bar" onclick="toggleNoteCollapse('${elementId}')">
+                  <span class="note-toggle-title" style="color:#1d4ed8">
+                    🙏 <span>${titleText}</span>
+                  </span>
+                  <span class="note-toggle-arrow" id="arrow_${elementId}">▼</span>
+                </div>
+                <div class="note-collapsible-content" id="content_${elementId}">
+                  <div onclick="openEditor('${p.id}','prayer')" style="font-style:italic; cursor:pointer;" title="Tap to edit">${p.t}</div>
+                  <div class="note-meta-footer">
+                    <span>✍️ Author: <b>${p.author || 'Berean Scholar'}</b>${dateHtml}</span>
+                    ${p.pwd ? '<span>🔒 Protected</span>' : ''}
+                    <span onclick="openEditor('${p.id}','prayer')" style="color:#1d4ed8; font-weight:bold; cursor:pointer;">✏️ Edit</span>
+                  </div>
+                </div>
               </div>
             </div>
           `;
@@ -3796,14 +4414,23 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   window.saveProfileSettings = saveProfileSettings;
   window.mentionUser = mentionUser;
   window.sendQuickReaction = sendQuickReaction;
+  window.openQuickNavModal = openQuickNavModal;
+  window.setQuickNavTab = setQuickNavTab;
+  window.filterQuickNavBooks = filterQuickNavBooks;
+  window.selectQuickNavBook = selectQuickNavBook;
+  window.selectQuickNavChapter = selectQuickNavChapter;
+  window.selectQuickNavVerse = selectQuickNavVerse;
+  window.toggleNoteCollapse = toggleNoteCollapse;
+  window.openCompareModal = openCompareModal;
+  window.switchToVersionFromCompare = switchToVersionFromCompare;
   window.init = init;
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventLitener('DOMContentLoaded', init);
   } else {
     init();
   }
 </script>
 </body>
 </html>
-
+1
