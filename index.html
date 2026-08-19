@@ -5008,7 +5008,7 @@ const titleText = p.title || `Prayer for ${p.ref}`;
                 </div>
                 <div class="note-collapsible-content" id="content_${elementId}">
                   <div onclick="openEditor('${p.id}','prayer')" style="font-style:italic; cursor:pointer;" title="Tap to edit">${p.t}</div>
-                  <div class="note-meta-footer">
+<div class="note-meta-footer">
                     <span>✍️ Author: <b>${p.author || 'Berean Scholar'}</b>${dateHtml}</span>
                     ${p.pwd ? '<span>🔒 Protected</span>' : ''}
                     <span onclick="openEditor('${p.id}','prayer')" style="color:#1d4ed8; font-weight:bold; cursor:pointer;">✏️ Edit</span>
@@ -5105,6 +5105,20 @@ const titleText = p.title || `Prayer for ${p.ref}`;
   window.toggleNoteCollapse = toggleNoteCollapse;
   window.openCompareModal = openCompareModal;
   window.switchToVersionFromCompare = switchToVersionFromCompare;
+  window.toggleSermonAccordion = toggleSermonAccordion;
+  window.renderSermonsList = renderSermonsList;
+  window.openSermonModal = openSermonModal;
+  window.saveSermonFromModal = saveSermonFromModal;
+  window.deleteSermon = deleteSermon;
+  window.renderQuotesList = renderQuotesList;
+  window.openQuoteModal = openQuoteModal;
+  window.saveQuoteFromModal = saveQuoteFromModal;
+  window.deleteQuote = deleteQuote;
+  window.shareTextNative = shareTextNative;
+  window.shareToWhatsApp = shareToWhatsApp;
+  window.shareToTwitter = shareToTwitter;
+  window.shareToFacebook = shareToFacebook;
+  window.copyToClipboard = copyToClipboard;
   window.init = init;
 
   if (document.readyState === 'loading') {
@@ -5114,4 +5128,4 @@ const titleText = p.title || `Prayer for ${p.ref}`;
   }
 </script>
 </body>
-</html>
+  </html>
