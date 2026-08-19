@@ -26,6 +26,8 @@
   --prayer-bg: #eff6ff; --prayer-border: #60a5fa;
   --case-bg: #f0fdf4; --case-border: #16a34a;
   --ai-bg: #f0f9ff; --ai-border: #0284c7;
+  --sermon-bg: #fdf4ff; --sermon-border: #c084fc;
+  --quote-bg: #fff7ed; --quote-border: #fb923c;
   --safe-area-top: env(safe-area-inset-top, 0px);
   --font-main: 'Inter', sans-serif;
   --font-size: 18px; --line-height: 1.6;
@@ -34,6 +36,7 @@ body.dark {
   --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --text-muted: #94a3b8; --border: #334155; 
   --note-bg: #422006; --note-border: #a16207; --prayer-bg: #172554; --prayer-border: #1d4ed8;
   --case-bg: #064e3b; --case-border: #059669; --ai-bg: #0c4a6e; --ai-border: #38bdf8;
+  --sermon-bg: #3b0764; --sermon-border: #a855f7; --quote-bg: #431407; --quote-border: #f97316;
   --hl-yellow: #854d0e;
 }
 body.serif-mode { --font-main: 'Crimson Text', serif; --font-size: 20px; } 
@@ -91,7 +94,7 @@ body { font-family: var(--font-main); background: var(--bg); color: var(--text);
   opacity: 0.85;
 }
 
-.sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: var(--card); border-right: 1px solid var(--border); z-index: 2000; transform: translateX(-100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding-top: var(--safe-area-top); }
+.sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: var(--card); border-right: 1px solid var(--border); z-index: 2000; transform: translateX(-100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding-top: var(--safe-area-top); overflow-y: auto; }
 .sidebar.open { transform: translateX(0); }
 .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1900; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(2px); }
 .overlay.active { opacity: 1; pointer-events: auto; }
@@ -213,6 +216,184 @@ body.dark .note-meta-footer {
 }
 body.dark .locked-note-badge {
   color: #fcd34d;
+}
+
+/* SERMON CARD & DROPDOWN ACCORDION STYLES */
+.sermon-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 5px solid #a855f7;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+.sermon-header-bar {
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  background: var(--card);
+  transition: background 0.2s;
+}
+.sermon-header-bar:hover {
+  background: rgba(168, 85, 247, 0.05);
+}
+.sermon-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  padding-right: 12px;
+}
+.sermon-topic-title {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sermon-meta-line {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sermon-arrow-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--text-muted);
+  transition: transform 0.25s ease, background 0.2s;
+  flex-shrink: 0;
+}
+.sermon-card.expanded .sermon-arrow-btn {
+  transform: rotate(180deg);
+  background: #a855f7;
+  color: white;
+  border-color: #a855f7;
+}
+.sermon-full-content {
+  display: none;
+  padding: 0 16px 16px 16px;
+  border-top: 1px dashed var(--border);
+  animation: fadeIn 0.25s ease;
+}
+.sermon-card.expanded .sermon-full-content {
+  display: block;
+}
+.sermon-body-text {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  margin-top: 12px;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+/* QUOTES PAGE & CARD STYLES */
+.quote-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 5px solid #f97316;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  position: relative;
+  transition: transform 0.2s;
+}
+.quote-card:hover {
+  transform: translateY(-2px);
+}
+.quote-symbol {
+  font-size: 2.2rem;
+  line-height: 1;
+  color: #f97316;
+  opacity: 0.35;
+  font-family: Georgia, serif;
+  margin-bottom: -10px;
+}
+.quote-main-text {
+  font-size: 1.08rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.quote-footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+  font-size: 0.85rem;
+}
+.quote-author {
+  font-weight: bold;
+  color: var(--primary);
+}
+
+/* SOCIAL SHARING BAR */
+.share-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.share-pill-btn {
+  padding: 5px 10px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.share-pill-btn:hover {
+  transform: translateY(-1px);
+}
+.share-pill-btn.wa { color: #15803d; border-color: #86efac; background: #f0fdf4; }
+.share-pill-btn.tw { color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; }
+.share-pill-btn.fb { color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; }
+.share-pill-btn.native { color: var(--primary); border-color: #fca5a5; background: #fef2f2; }
+
+/* STUDY MESSAGE SCRIPTURE REF PILL */
+.study-msg-ref {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.78rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  margin: 2px 2px;
+  border: 1px solid #bae6fd;
 }
 
 /* QUICK SELECTOR MODAL STYLES */
@@ -531,6 +712,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 #dictionaryModal { z-index: 6500; }
 #quickNavModal { z-index: 5200; }
 #compareModal { z-index: 5600; }
+#sermonModal { z-index: 5400; }
+#quoteModal { z-index: 5450; }
 
 /* AI RELATIONSHIP STYLES */
 .ai-header-badge { display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0369a1; font-size: 0.75rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; margin-bottom: 8px; }
@@ -607,6 +790,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   <div class="menu-head">Bible Pro Menu</div>
   <div class="menu-item" onclick="openProfileModal()">👤 &nbsp; Author & Security Profile</div>
   <div class="menu-item" onclick="nav('read')">📖 &nbsp; Bible Reader</div>
+  <div class="menu-item" onclick="nav('sermons')">🎙️ &nbsp; Sermons & Messages</div>
+  <div class="menu-item" onclick="nav('quotes')">💬 &nbsp; Inspirational Quotes</div>
   <div class="menu-item" onclick="nav('studyroom')">👥 &nbsp; Live Study Room</div>
   <div class="menu-item" onclick="nav('mycases')">💼 &nbsp; My Case Studies</div>
   <div class="menu-item" onclick="nav('search')">🔍 &nbsp; Search Bible</div>
@@ -615,6 +800,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   <div class="menu-item" onclick="nav('cloud')">☁️ &nbsp; Cloud Sync</div>
 </div>
 
+<!-- BIBLE READER VIEW -->
 <div id="view-read" class="view-section active">
   <div class="controls-card">
     <div class="row">
@@ -644,6 +830,40 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
       💡 Tip: Tap the <b>top header title</b> to jump directly, or tap <b>⚖️ Compare</b> on any verse to view all Bible translations side-by-side.
   </div>
   <div id="bible-content"><div style="text-align:center; padding:40px; color:var(--text-muted)">Loading Bible Reader...</div></div>
+</div>
+
+<!-- SERMONS & MESSAGES VIEW (WITH TOPIC DROPDOWN & SOCIAL SHARE) -->
+<div id="view-sermons" class="view-section">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h2 style="color:var(--primary); margin:0;">🎙️ Sermons & Messages</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin:4px 0 0 0;">Tap any sermon topic below to drop down the full message, quotes, and share on social media.</p>
+    </div>
+    <button class="primary-btn" onclick="openSermonModal()" style="width:auto; padding:8px 16px; background:#a855f7;">+ Add Sermon</button>
+  </div>
+
+  <div class="controls-card" style="padding:12px 15px; margin-bottom:15px;">
+    <input type="text" id="sermonSearchInput" placeholder="🔍 Search sermon topics, preacher, or scriptures..." oninput="renderSermonsList(this.value)" style="width:100%; box-sizing:border-box; padding:10px 12px; font-size:0.9rem;">
+  </div>
+
+  <div id="sermonsContainer"></div>
+</div>
+
+<!-- QUOTES DEDICATED PAGE (WITH SOCIAL SHARE) -->
+<div id="view-quotes" class="view-section">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h2 style="color:var(--primary); margin:0;">💬 Inspirational Quotes Library</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin:4px 0 0 0;">Spiritual quotes and insights. Easily share with family and social media.</p>
+    </div>
+    <button class="primary-btn" onclick="openQuoteModal()" style="width:auto; padding:8px 16px; background:#f97316;">+ Add Quote</button>
+  </div>
+
+  <div class="controls-card" style="padding:12px 15px; margin-bottom:15px;">
+    <input type="text" id="quoteSearchInput" placeholder="🔍 Search quotes by author, topic, or keyword..." oninput="renderQuotesList(this.value)" style="width:100%; box-sizing:border-box; padding:10px 12px; font-size:0.9rem;">
+  </div>
+
+  <div id="quotesContainer"></div>
 </div>
 
 <!-- LIVE STUDY ROOM VIEW -->
@@ -869,6 +1089,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   </div>
 </div>
 
+<!-- SEARCH VIEW -->
 <div id="view-search" class="view-section">
     <h2 style="color:var(--primary)">🔍 Search</h2>
     <div class="controls-card">
@@ -881,6 +1102,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
     <div id="searchResults"></div>
 </div>
 
+<!-- MY CASE STUDIES VIEW -->
 <div id="view-mycases" class="view-section">
   <h2 style="color:var(--primary)">💼 My Case Studies</h2>
   <div class="controls-card">
@@ -890,6 +1112,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   <div id="myCasesList"></div>
 </div>
 
+<!-- CLOUD SYNC VIEW -->
 <div id="view-cloud" class="view-section">
   <h2 style="color:var(--primary)">☁️ Cloud Sync</h2>
   <div class="controls-card">
@@ -917,13 +1140,82 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   </div>
 </div>
 
+<!-- PRAYER LIST VIEW -->
 <div id="view-prayer" class="view-section"><h2>🙏 Prayer List</h2><div id="prayer-list"></div></div>
+
+<!-- DAILY VERSE VIEW -->
 <div id="view-daily" class="view-section">
     <h2>🌅 Daily Verse</h2>
     <div class="controls-card" style="text-align:center">
         <button onclick="loadDaily()" style="margin-bottom:10px">🔄 New Random Verse</button>
         <div id="daily-card"></div>
     </div>
+</div>
+
+<!-- SERMON MODAL BUILDER -->
+<div class="modal" id="sermonModal">
+  <div class="modal-content" style="max-width:520px;">
+    <h3 id="sermonModalTitle" style="margin-top:0; color:var(--primary)">🎙️ Add Sermon / Message</h3>
+    
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">📌 Sermon Topic / Title *</label>
+        <input type="text" id="sermonInputTopic" placeholder="e.g. Walking in the Fullness of Grace" style="width:100%; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">👤 Preacher / Minister</label>
+        <input type="text" id="sermonInputPreacher" placeholder="e.g. Pastor John / Evangelist Paul" style="width:100%; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">📖 Anchor Scriptures (comma separated)</label>
+        <input type="text" id="sermonInputScriptures" placeholder="e.g. Ephesians 2:8-10, Romans 8:1" style="width:100%; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">🏷️ Tags / Themes</label>
+        <input type="text" id="sermonInputTags" placeholder="e.g. Grace, Faith, Victory" style="width:100%; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">📝 Full Sermon Message / Key Notes *</label>
+        <textarea id="sermonInputBody" placeholder="Write or paste full sermon notes, key outlines, and insights here..." style="width:100%; height:140px; border:1px solid var(--border); border-radius:10px; padding:10px; box-sizing:border-box; font-family:inherit;"></textarea>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px;">
+      <button onclick="closeModal('sermonModal')" style="flex:1; background:transparent">Cancel</button>
+      <button onclick="saveSermonFromModal()" class="primary-btn" style="flex:1; background:#a855f7;">Save Sermon 💾</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUOTE MODAL BUILDER -->
+<div class="modal" id="quoteModal">
+  <div class="modal-content" style="max-width:480px;">
+    <h3 id="quoteModalTitle" style="margin-top:0; color:#f97316">💬 Add Inspirational Quote</h3>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">💬 Quote Content *</label>
+        <textarea id="quoteInputText" placeholder="Write or paste the inspirational quote here..." style="width:100%; height:100px; border:1px solid var(--border); border-radius:10px; padding:10px; box-sizing:border-box; font-family:inherit;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">👤 Author / Speaker</label>
+        <input type="text" id="quoteInputAuthor" placeholder="e.g. C.S. Lewis, Charles Spurgeon, Pastor David" style="width:100%; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">📖 Associated Scripture (Optional)</label>
+        <input type="text" id="quoteInputRef" placeholder="e.g. Proverbs 3:5-6" style="width:100%; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:4px;">🏷️ Category / Tag</label>
+        <input type="text" id="quoteInputCategory" placeholder="e.g. Faith, Hope, Courage" style="width:100%; box-sizing:border-box;">
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px;">
+      <button onclick="closeModal('quoteModal')" style="flex:1; background:transparent">Cancel</button>
+      <button onclick="saveQuoteFromModal()" class="primary-btn" style="flex:1; background:#f97316;">Save Quote 💾</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOP HEADER QUICK BIBLE SELECTOR MODAL -->
@@ -1203,7 +1495,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   </div>
 </div>
 
-<!-- BUILDER MODAL -->
+<!-- CASE BUILDER MODAL -->
 <div class="modal" id="builderModal">
     <div class="modal-content">
         <h3 style="margin-top:0">🛠 Build Case Study</h3>
@@ -1301,6 +1593,52 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
 
   const GLOBAL_PUBLIC_CHANNEL = "global_community";
 
+  // DEFAULT CURATED SERMONS AND QUOTES DATA
+  const defaultSermons = {
+    "sermon_1": {
+      id: "sermon_1",
+      topic: "The Power of Unwavering Faith",
+      preacher: "Pastor Faith Builder",
+      date: "Sunday Service",
+      scriptures: "Hebrews 11:1, Romans 8:28, Mark 11:24",
+      tags: "Faith, Trust, Victory",
+      body: "Faith is not simply believing that God can do something; it is the deep, peaceful knowing that He will. When circumstances look bleak and storms rise, faith anchors the soul in God's eternal promises.\n\n1. Faith sees the invisible and receives the impossible.\n2. Faith speaks life into dead situations.\n3. Faith persists when everything else gives up.\n\nTrust God with all your heart, and lean not upon your own understanding."
+    },
+    "sermon_2": {
+      id: "sermon_2",
+      topic: "Walking in Grace and Supernatural Peace",
+      preacher: "Minister Graceful",
+      date: "Midweek Fellowship",
+      scriptures: "Ephesians 2:8-9, Philippians 4:6-7, John 14:27",
+      tags: "Grace, Peace, Rest",
+      body: "Grace is God's unearned favor poured out upon us. It frees us from guilt, performance anxiety, and the fear of failure.\n\nWhen we understand grace, the peace of God which surpasses all human understanding guards our hearts and minds in Christ Jesus.\n\nTake courage today: God's grace is more than sufficient for your every need."
+    }
+  };
+
+  const defaultQuotes = {
+    "quote_1": {
+      id: "quote_1",
+      text: "Faith does not eliminate questions. But faith knows where to take them.",
+      author: "Elisabeth Elliot",
+      scriptureRef: "Proverbs 3:5",
+      category: "Faith"
+    },
+    "quote_2": {
+      id: "quote_2",
+      text: "God never said that the journey would be easy, but He did say that the arrival would be worthwhile.",
+      author: "Max Lucado",
+      scriptureRef: "Romans 8:18",
+      category: "Hope"
+    },
+    "quote_3": {
+      id: "quote_3",
+      text: "Prayer is not overcoming God's reluctance; it is laying hold of His willingness.",
+      author: "Martin Luther",
+      scriptureRef: "1 John 5:14",
+      category: "Prayer"
+    }
+  };
+
   let state = {
     book: 1, chapter: 1, currentVerse: 1, version: 'NKJV', 
     highlights: safeJSONParse('highlights', {}), 
@@ -1309,6 +1647,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
     userCases: safeJSONParse('userCases', {}), 
     userRelationships: safeJSONParse('userRelationships', {}),
     dismissedAIRelationships: safeJSONParse('dismissedAIRelationships', {}),
+    sermons: safeJSONParse('sermons', defaultSermons),
+    quotes: safeJSONParse('quotes', defaultQuotes),
     localSavedSessions: safeJSONParse('localSavedSessions', []),
     currentID: localStorage.getItem('cloudID') || GLOBAL_PUBLIC_CHANNEL,
     userName: localStorage.getItem('studyUserName') || 'Berean Scholar',
@@ -1329,6 +1669,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   let currentScriptureData = null; 
   let activeEditor = { id: null, type: null };
   let editingCaseId = null; 
+  let editingSermonId = null;
+  let editingQuoteId = null;
   let tempCaseRefs = []; 
   let unsubscribe = null; 
   let studyUnsubscribe = null;
@@ -1397,6 +1739,330 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   ];
 
   const dom = id => document.getElementById(id);
+
+  /* --- SOCIAL SHARING ENGINE --- */
+  function shareTextNative(title, text) {
+    if (navigator.share) {
+      navigator.share({
+        title: title || 'Bible Pro Inspiration',
+        text: text
+      }).catch((e) => console.log('Share dismissed', e));
+    } else {
+      copyToClipboard(text);
+    }
+  }
+
+  function shareToWhatsApp(text) {
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
+  function shareToTwitter(text) {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
+  function shareToFacebook(text) {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast("📋 Copied to clipboard!");
+      }).catch(() => {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      toast("📋 Copied to clipboard!");
+    } catch(e) {
+      alert("Unable to copy to clipboard automatically.");
+    }
+    document.body.removeChild(ta);
+  }
+
+  /* --- SERMONS PLACE & TOPIC DROPDOWN CONTROLLER --- */
+  function toggleSermonAccordion(sermonId) {
+    const card = dom(`sermon_${sermonId}`);
+    if (!card) return;
+    card.classList.toggle('expanded');
+  }
+
+  function renderSermonsList(filterQuery = '') {
+    const container = dom('sermonsContainer');
+    if (!container) return;
+
+    const list = Object.values(state.sermons || {});
+    const q = (filterQuery || '').toLowerCase().trim();
+
+    const filtered = list.filter(s => {
+      if (!q) return true;
+      const topic = (s.topic || '').toLowerCase();
+      const preacher = (s.preacher || '').toLowerCase();
+      const body = (s.body || '').toLowerCase();
+      const tags = (s.tags || '').toLowerCase();
+      const scriptures = (s.scriptures || '').toLowerCase();
+      return topic.includes(q) || preacher.includes(q) || body.includes(q) || tags.includes(q) || scriptures.includes(q);
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="controls-card" style="text-align:center; padding:30px; color:var(--text-muted);">
+          <div style="font-size:2rem; margin-bottom:8px;">🎙️</div>
+          <b>No sermons found matching "${filterQuery}"</b>
+          <p style="font-size:0.85rem; margin-top:6px;">Click "+ Add Sermon" above to add and organize your first sermon message!</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    filtered.forEach(s => {
+      const scripturesList = (s.scriptures || '').split(',').map(x => x.trim()).filter(Boolean);
+      const scripturePills = scripturesList.map(ref => {
+        const esc = ref.replace(/'/g, "\\'");
+        return `<span class="study-msg-ref" onclick="event.stopPropagation(); previewPassage('${esc}', 'Sermon Scripture', '')">📖 ${ref}</span>`;
+      }).join(' ');
+
+      const shareText = `🎙️ *${s.topic}*\n👤 Preacher: ${s.preacher || 'Minister'}\n📖 Scripture: ${s.scriptures || ''}\n\n"${s.body}"\n\n— Shared via Bible Pro`;
+
+      html += `
+        <div class="sermon-card" id="sermon_${s.id}">
+          <div class="sermon-header-bar" onclick="toggleSermonAccordion('${s.id}')">
+            <div class="sermon-title-wrap">
+              <div class="sermon-topic-title">
+                <span>🎙️</span>
+                <span>${s.topic}</span>
+              </div>
+              <div class="sermon-meta-line">
+                <span>👤 <b>${s.preacher || 'Minister'}</b></span>
+                ${s.date ? `<span>📅 ${s.date}</span>` : ''}
+                ${s.tags ? `<span>🏷️ ${s.tags}</span>` : ''}
+              </div>
+            </div>
+            <div class="sermon-arrow-btn" title="Tap to drop down full message">▼</div>
+          </div>
+
+          <div class="sermon-full-content">
+            ${scripturePills ? `<div style="margin-top:10px; margin-bottom:10px;">${scripturePills}</div>` : ''}
+            <div class="sermon-body-text">${wrapWords(s.body)}</div>
+
+            <!-- Social Media & Sharing Bar -->
+            <div class="share-action-bar">
+              <span style="font-size:0.75rem; font-weight:bold; color:var(--text-muted); margin-right:4px;">📤 Share:</span>
+              <button class="share-pill-btn wa" onclick="shareToWhatsApp(\`${escapeForAttr(shareText)}\`)">💬 WhatsApp</button>
+              <button class="share-pill-btn tw" onclick="shareToTwitter(\`${escapeForAttr(shareText)}\`)">🐦 X / Twitter</button>
+              <button class="share-pill-btn fb" onclick="shareToFacebook(\`${escapeForAttr(shareText)}\`)">📘 Facebook</button>
+              <button class="share-pill-btn native" onclick="shareTextNative('${escapeForAttr(s.topic)}', \`${escapeForAttr(shareText)}\`)">📲 Share / Copy</button>
+              
+              <div style="margin-left:auto; display:flex; gap:6px;">
+                <button onclick="openSermonModal('${s.id}')" style="font-size:0.75rem; padding:4px 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px;">✏️ Edit</button>
+                <button onclick="deleteSermon('${s.id}')" style="font-size:0.75rem; padding:4px 8px; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; border-radius:6px;">🗑️ Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function escapeForAttr(str) {
+    if (!str) return '';
+    return str.replace(/`/g, '\\`').replace(/\$/g, '\\$').replace(/"/g, '&quot;');
+  }
+
+  function openSermonModal(sermonId = null) {
+    editingSermonId = sermonId;
+    if (sermonId && state.sermons[sermonId]) {
+      const s = state.sermons[sermonId];
+      if (dom('sermonModalTitle')) dom('sermonModalTitle').innerText = "✏️ Edit Sermon Message";
+      if (dom('sermonInputTopic')) dom('sermonInputTopic').value = s.topic || '';
+      if (dom('sermonInputPreacher')) dom('sermonInputPreacher').value = s.preacher || '';
+      if (dom('sermonInputScriptures')) dom('sermonInputScriptures').value = s.scriptures || '';
+      if (dom('sermonInputTags')) dom('sermonInputTags').value = s.tags || '';
+      if (dom('sermonInputBody')) dom('sermonInputBody').value = s.body || '';
+    } else {
+      if (dom('sermonModalTitle')) dom('sermonModalTitle').innerText = "🎙️ Add Sermon / Message";
+      if (dom('sermonInputTopic')) dom('sermonInputTopic').value = '';
+      if (dom('sermonInputPreacher')) dom('sermonInputPreacher').value = state.authorName || '';
+      if (dom('sermonInputScriptures')) dom('sermonInputScriptures').value = '';
+      if (dom('sermonInputTags')) dom('sermonInputTags').value = '';
+      if (dom('sermonInputBody')) dom('sermonInputBody').value = '';
+    }
+    if (dom('sermonModal')) dom('sermonModal').classList.add('open');
+  }
+
+  function saveSermonFromModal() {
+    const topic = dom('sermonInputTopic') ? dom('sermonInputTopic').value.trim() : '';
+    const preacher = dom('sermonInputPreacher') ? dom('sermonInputPreacher').value.trim() : '';
+    const scriptures = dom('sermonInputScriptures') ? dom('sermonInputScriptures').value.trim() : '';
+    const tags = dom('sermonInputTags') ? dom('sermonInputTags').value.trim() : '';
+    const body = dom('sermonInputBody') ? dom('sermonInputBody').value.trim() : '';
+
+    if (!topic || !body) {
+      return alert("Please enter both Sermon Topic and Message Body.");
+    }
+
+    const id = editingSermonId || ('sermon_' + Date.now());
+    state.sermons[id] = {
+      id,
+      topic,
+      preacher: preacher || state.authorName || 'Minister',
+      scriptures,
+      tags,
+      body,
+      date: new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    };
+
+    localStorage.setItem('sermons', JSON.stringify(state.sermons));
+    pushToCloud();
+    closeModal('sermonModal');
+    renderSermonsList();
+    toast("Sermon Message Saved!");
+  }
+
+  function deleteSermon(id) {
+    if (!confirm("Are you sure you want to delete this sermon?")) return;
+    delete state.sermons[id];
+    localStorage.setItem('sermons', JSON.stringify(state.sermons));
+    pushToCloud();
+    renderSermonsList();
+    toast("Sermon deleted.");
+  }
+
+  /* --- QUOTES DEDICATED PAGE CONTROLLER --- */
+  function renderQuotesList(filterQuery = '') {
+    const container = dom('quotesContainer');
+    if (!container) return;
+
+    const list = Object.values(state.quotes || {});
+    const q = (filterQuery || '').toLowerCase().trim();
+
+    const filtered = list.filter(item => {
+      if (!q) return true;
+      const text = (item.text || '').toLowerCase();
+      const author = (item.author || '').toLowerCase();
+      const category = (item.category || '').toLowerCase();
+      const ref = (item.scriptureRef || '').toLowerCase();
+      return text.includes(q) || author.includes(q) || category.includes(q) || ref.includes(q);
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="controls-card" style="text-align:center; padding:30px; color:var(--text-muted);">
+          <div style="font-size:2rem; margin-bottom:8px;">💬</div>
+          <b>No inspirational quotes found matching "${filterQuery}"</b>
+          <p style="font-size:0.85rem; margin-top:6px;">Click "+ Add Quote" above to build your inspirational library!</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    filtered.forEach(qItem => {
+      const shareText = `💬 "${qItem.text}"\n— ${qItem.author || 'Anonymous'}${qItem.scriptureRef ? ' (' + qItem.scriptureRef + ')' : ''}\n\nShared via Bible Pro`;
+      const refEscaped = (qItem.scriptureRef || '').replace(/'/g, "\\'");
+
+      html += `
+        <div class="quote-card">
+          <div class="quote-symbol">“</div>
+          <div class="quote-main-text">${wrapWords(qItem.text)}</div>
+          
+          <div class="quote-footer-bar">
+            <div>
+              <span class="quote-author">— ${qItem.author || 'Anonymous'}</span>
+              ${qItem.category ? `<span class="uc-tag-pill" style="margin-left:6px; color:#f97316; border-color:#fed7aa">🏷️ ${qItem.category}</span>` : ''}
+            </div>
+            ${qItem.scriptureRef ? `<span class="study-msg-ref" onclick="previewPassage('${refEscaped}', 'Quote Anchor', '')">📖 ${qItem.scriptureRef}</span>` : ''}
+          </div>
+
+          <!-- Social Share Bar for Quotes -->
+          <div class="share-action-bar">
+            <span style="font-size:0.75rem; font-weight:bold; color:var(--text-muted); margin-right:4px;">📤 Share:</span>
+            <button class="share-pill-btn wa" onclick="shareToWhatsApp(\`${escapeForAttr(shareText)}\`)">💬 WhatsApp</button>
+            <button class="share-pill-btn tw" onclick="shareToTwitter(\`${escapeForAttr(shareText)}\`)">🐦 X / Twitter</button>
+            <button class="share-pill-btn fb" onclick="shareToFacebook(\`${escapeForAttr(shareText)}\`)">📘 Facebook</button>
+            <button class="share-pill-btn native" onclick="shareTextNative('Inspirational Quote', \`${escapeForAttr(shareText)}\`)">📲 Share / Copy</button>
+
+            <div style="margin-left:auto; display:flex; gap:6px;">
+              <button onclick="openQuoteModal('${qItem.id}')" style="font-size:0.75rem; padding:4px 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px;">✏️</button>
+              <button onclick="deleteQuote('${qItem.id}')" style="font-size:0.75rem; padding:4px 8px; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; border-radius:6px;">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function openQuoteModal(quoteId = null) {
+    editingQuoteId = quoteId;
+    if (quoteId && state.quotes[quoteId]) {
+      const q = state.quotes[quoteId];
+      if (dom('quoteModalTitle')) dom('quoteModalTitle').innerText = "✏️ Edit Inspirational Quote";
+      if (dom('quoteInputText')) dom('quoteInputText').value = q.text || '';
+      if (dom('quoteInputAuthor')) dom('quoteInputAuthor').value = q.author || '';
+      if (dom('quoteInputRef')) dom('quoteInputRef').value = q.scriptureRef || '';
+      if (dom('quoteInputCategory')) dom('quoteInputCategory').value = q.category || '';
+    } else {
+      if (dom('quoteModalTitle')) dom('quoteModalTitle').innerText = "💬 Add Inspirational Quote";
+      if (dom('quoteInputText')) dom('quoteInputText').value = '';
+      if (dom('quoteInputAuthor')) dom('quoteInputAuthor').value = '';
+      if (dom('quoteInputRef')) dom('quoteInputRef').value = '';
+      if (dom('quoteInputCategory')) dom('quoteInputCategory').value = 'Faith';
+    }
+    if (dom('quoteModal')) dom('quoteModal').classList.add('open');
+  }
+
+  function saveQuoteFromModal() {
+    const text = dom('quoteInputText') ? dom('quoteInputText').value.trim() : '';
+    const author = dom('quoteInputAuthor') ? dom('quoteInputAuthor').value.trim() : '';
+    const scriptureRef = dom('quoteInputRef') ? dom('quoteInputRef').value.trim() : '';
+    const category = dom('quoteInputCategory') ? dom('quoteInputCategory').value.trim() : '';
+
+    if (!text) {
+      return alert("Please enter the quote text.");
+    }
+
+    const id = editingQuoteId || ('quote_' + Date.now());
+    state.quotes[id] = {
+      id,
+      text,
+      author: author || 'Anonymous',
+      scriptureRef,
+      category: category || 'General'
+    };
+
+    localStorage.setItem('quotes', JSON.stringify(state.quotes));
+    pushToCloud();
+    closeModal('quoteModal');
+    renderQuotesList();
+    toast("Quote Saved!");
+  }
+
+  function deleteQuote(id) {
+    if (!confirm("Are you sure you want to delete this quote?")) return;
+    delete state.quotes[id];
+    localStorage.setItem('quotes', JSON.stringify(state.quotes));
+    pushToCloud();
+    renderQuotesList();
+    toast("Quote deleted.");
+  }
 
   /* --- DYNAMIC HEADER TRACKER ENGINE --- */
   function updateHeaderDashboard(text, verseNum = null) {
@@ -3211,7 +3877,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
           fullText = vData.text;
         } else {
           const chRes = await fetch(`https://bolls.life/get-chapter/${state.version}/${bIdx}/${chap}/`);
-          const chData = await chRes.json();
+          const chData = await res.json();
           const match = chData.find(x => x.verse == vNum);
           fullText = match ? match.text : "Scripture passage loaded.";
         }
@@ -3726,6 +4392,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
                   state.versePrayers = { ...(data.prayers || {}), ...state.versePrayers };
                   state.userCases = { ...(data.cases || {}), ...state.userCases };
                   state.userRelationships = { ...(data.userRelationships || {}), ...state.userRelationships };
+                  state.sermons = { ...(data.sermons || {}), ...state.sermons };
+                  state.quotes = { ...(data.quotes || {}), ...state.quotes };
                   isInitialLoad = false;
                   pushToCloud();
               } else {
@@ -3734,6 +4402,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
                   state.versePrayers = data.prayers || {};
                   state.userCases = data.cases || {}; 
                   state.userRelationships = data.userRelationships || {};
+                  state.sermons = data.sermons || state.sermons;
+                  state.quotes = data.quotes || state.quotes;
               }
               
               localStorage.setItem('highlights', JSON.stringify(state.highlights));
@@ -3741,12 +4411,16 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
               localStorage.setItem('versePrayers', JSON.stringify(state.versePrayers));
               localStorage.setItem('userCases', JSON.stringify(state.userCases));
               localStorage.setItem('userRelationships', JSON.stringify(state.userRelationships));
+              localStorage.setItem('sermons', JSON.stringify(state.sermons));
+              localStorage.setItem('quotes', JSON.stringify(state.quotes));
 
               dom('statusLog').innerHTML = `<span style="color:#16a34a; font-weight:bold">🟢 Live Public Sync Active (${new Date().toLocaleTimeString()})</span>`;
               
               if (currentScriptureData) renderBible(currentScriptureData); 
               if (dom('view-mycases') && dom('view-mycases').classList.contains('active')) renderMyCases();
               if (dom('view-prayer') && dom('view-prayer').classList.contains('active')) renderPrayerList();
+              if (dom('view-sermons') && dom('view-sermons').classList.contains('active')) renderSermonsList();
+              if (dom('view-quotes') && dom('view-quotes').classList.contains('active')) renderQuotesList();
           } else {
               isInitialLoad = false;
               pushToCloud();
@@ -3765,6 +4439,8 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
               prayers: state.versePrayers || {}, 
               cases: state.userCases || {}, 
               userRelationships: state.userRelationships || {},
+              sermons: state.sermons || {},
+              quotes: state.quotes || {},
               lastUpdate: new Date().toISOString()
           }, { merge: true });
           dom('statusLog').innerHTML = `<span style="color:#16a34a; font-weight:bold">🟢 Public Sync Updated (${new Date().toLocaleTimeString()})</span>`;
@@ -4255,6 +4931,12 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
         const bookName = bibleData[state.book - 1] ? bibleData[state.book - 1].n : "Genesis";
         updateHeaderDashboard(`${bookName} ${state.chapter}`, state.currentVerse || 1);
         updateActiveReadingVerse();
+      } else if (id === 'sermons') {
+        updateHeaderDashboard("🎙️ Sermons & Messages");
+        renderSermonsList();
+      } else if (id === 'quotes') {
+        updateHeaderDashboard("💬 Inspirational Quotes");
+        renderQuotesList();
       } else if (id === 'studyroom') {
         updateHeaderDashboard(`👥 ${state.studyRoom}`);
         listenToStudyRoom();
@@ -4313,7 +4995,7 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
             `;
           }
 
-          const titleText = p.title || `Prayer for ${p.ref}`;
+const titleText = p.title || `Prayer for ${p.ref}`;
           return `
             <div class="verse-card">
               <div class="v-header">${p.ref}</div>
@@ -4426,11 +5108,10 @@ body.dark .dict-pos { background: #0c4a6e; color: #38bdf8; }
   window.init = init;
 
   if (document.readyState === 'loading') {
-    document.addEventLitener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 </script>
 </body>
 </html>
-1
